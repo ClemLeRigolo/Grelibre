@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import '../styles/MapComponent.css';
 import axios from 'axios';
 import Loader from '../components/loader';
-import { Search, My, TrashCan, ArrowRight, Location } from '@carbon/icons-react';
+import { Search, My, TrashCan, ArrowRight, Location, Share } from '@carbon/icons-react';
 import { Search as CarbonSearch, Button, Tag, Dropdown, TextInput, Toggle } from 'carbon-components-react';
 
 // Token d'accès Mapbox
@@ -30,6 +30,7 @@ const MapComponent = () => {
     const routeSourceRef = useRef(null);
     const userPositionMarkerRef = useRef(null);
     const [destinationCoords, setDestinationCoords] = useState(null);
+    const [startPointCoords, setStartPointCoords] = useState(null);
 
     // État pour gérer le chargement
     const [mapLoading, setMapLoading] = useState(true);
@@ -309,49 +310,87 @@ const MapComponent = () => {
     useEffect(() => {
         const parseUrlParams = () => {
             const urlParams = new URLSearchParams(window.location.search);
+            // Paramètres pour la destination
             const toParam = urlParams.get('to');
             const toCoordsParam = urlParams.get('to_coords');
+            // Nouveaux paramètres pour le point de départ
+            const fromParam = urlParams.get('from');
+            const fromCoordsParam = urlParams.get('from_coords');
+            
+            let hasDestination = false;
             
             if (toParam && toCoordsParam) {
                 try {
-                    // Décoder le nom de la destination
                     const decodedDestName = decodeURIComponent(toParam);
-                    
-                    // Analyser les coordonnées (format: "longitude,latitude")
                     const coords = toCoordsParam.split(',').map(coord => parseFloat(coord));
                     
                     if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
                         console.log("Destination depuis URL:", decodedDestName, coords);
-                        
-                        // Stocker le nom de destination
                         setEndPoint(decodedDestName);
-                        
-                        // Stocker les coordonnées pour utilisation après le chargement de la carte
                         setDestinationCoords(coords);
-                        
-                        // Passer directement en mode itinéraire
                         setSearchMode('route');
-                        
-                        // Créer un objet destination pour la cohérence avec le reste du code
                         setSelectedDestination({
                             text: decodedDestName,
                             place_name: decodedDestName,
                             center: coords
                         });
+                        hasDestination = true;
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de l'analyse des paramètres d'URL pour la destination:", error);
+                }
+            }
+            
+            if (fromParam && fromCoordsParam) {
+                try {
+                    const decodedStartName = decodeURIComponent(fromParam);
+                    const coords = fromCoordsParam.split(',').map(coord => parseFloat(coord));
+                    
+                    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                        console.log("Point de départ depuis URL:", decodedStartName, coords);
+                        setStartPoint(decodedStartName);
+                        setStartPointCoords(coords);
                         
-                        // Si on a la position utilisateur disponible, l'utiliser comme point de départ
-                        if (userPosition) {
-                            setStartPoint("Ma position actuelle");
+                        // Passer en mode itinéraire seulement si une destination est également définie
+                        if (hasDestination) {
+                            setSearchMode('route');
                         }
                     }
                 } catch (error) {
-                    console.error("Erreur lors de l'analyse des paramètres d'URL:", error);
+                    console.error("Erreur lors de l'analyse des paramètres d'URL pour le point de départ:", error);
                 }
             }
         };
         
         parseUrlParams();
-    }, [userPosition]); // Dépendance à userPosition pour réagir quand celle-ci devient disponible
+    }, []); // Exécuter une seule fois au chargement initial
+
+    const generateShareUrl = () => {
+        if (!selectedDestination || !selectedDestination.place_name || !selectedDestination.center) {
+            return null;
+        }
+        
+        // Create URL with parameters
+        const baseUrl = window.location.origin;
+        const toParam = encodeURIComponent(selectedDestination.place_name);
+        const toCoords = `${selectedDestination.center[0]},${selectedDestination.center[1]}`;
+        
+        return `${baseUrl}/?to=${toParam}&to_coords=${toCoords}`;
+    };
+
+    const shareDestination = () => {
+        const shareUrl = generateShareUrl();
+        if (!shareUrl) return;
+        
+        navigator.clipboard.writeText(shareUrl)
+            .then(() => {
+                // You could add a state here to show a success message
+                alert('URL copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Failed to copy URL: ', err);
+            });
+    };
 
     // Utilisation des fonctions existantes...
     const getBoundsAround = (center, radiusInKm) => {
@@ -431,6 +470,7 @@ const calculateRoute = async () => {
         markersRef.current = [];
         
         // Obtenir les coordonnées de départ
+        // Dans la fonction calculateRoute, remplacer la partie qui obtient les coordonnées de départ :
         let startCoords;
         if (startPoint === "Ma position actuelle") {
             // Utiliser directement les coordonnées de la position utilisateur
@@ -438,6 +478,9 @@ const calculateRoute = async () => {
                 throw new Error("Position actuelle non disponible. Veuillez autoriser la géolocalisation.");
             }
             startCoords = userPosition;
+        } else if (startPointCoords && startPoint === decodeURIComponent(new URLSearchParams(window.location.search).get('from') || '')) {
+            // Utiliser les coordonnées du point de départ de l'URL si le nom correspond
+            startCoords = startPointCoords;
         } else {
             // Sinon utiliser le geocoding
             startCoords = await geocodePlace(startPoint);
@@ -768,7 +811,7 @@ const calculateRoute = async () => {
         setEndPoint(result.place_name);
         
         // Si on a la position de l'utilisateur, l'utiliser comme point de départ
-        if (userPosition) {
+        if (userPosition && !startPoint) {
             setStartPoint("Ma position actuelle");
         }
         
@@ -784,6 +827,7 @@ const calculateRoute = async () => {
         setStartPoint('');
         setEndPoint('');
         setDestinationCoords(null);
+        setStartPointCoords(null);
         
         // Nettoyer les anciens marqueurs et itinéraires
         markersRef.current.forEach(marker => marker.remove());
@@ -1206,6 +1250,19 @@ useEffect(() => {
                                 toggleTransport={handleToggleTransport} 
                             />
                         </div>
+                        <div className="route-panel-actions">
+                            <Button
+                                kind="ghost"
+                                renderIcon={Share}
+                                iconDescription="Partager"
+                                onClick={() => {
+                                    const shareUrl = `${window.location.origin}${window.location.pathname}?destination=${encodeURIComponent(selectedDestination.place_name)}`;
+                                    navigator.clipboard.writeText(shareUrl);
+                                }}
+                                hasIconOnly
+                            />
+                        </div>
+
                     </div>
                     
                     <div className="route-form">
