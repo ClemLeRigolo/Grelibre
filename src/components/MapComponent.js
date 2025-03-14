@@ -5,7 +5,7 @@ import '../styles/MapComponent.css';
 import axios from 'axios';
 import Loader from '../components/loader';
 import { Search, My, TrashCan, ArrowRight, Location } from '@carbon/icons-react';
-import { Search as CarbonSearch, Button, Tag, Dropdown, TextInput } from 'carbon-components-react';
+import { Search as CarbonSearch, Button, Tag, Dropdown, TextInput, Toggle } from 'carbon-components-react';
 
 // Token d'accès Mapbox
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmVyZ2VvbmgiLCJhIjoiY204OG0zdWJhMGx4MzJtczVjYWZkZTN0NiJ9.zL-NC_caiJbgVsp9DV-yiA';
@@ -45,210 +45,196 @@ const MapComponent = () => {
     const [searchMode, setSearchMode] = useState('search'); // 'search' ou 'route'
     const [selectedDestination, setSelectedDestination] = useState(null);
 
-    // Obtenir la position de l'utilisateur dès le départ
+    // Remplacer les deux useEffect séparés par un seul qui gère à la fois la carte et la position
     useEffect(() => {
+        // Fonction pour obtenir la position de l'utilisateur
         const getUserPosition = () => {
-            setLocationLoading(true);
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        setUserPosition([longitude, latitude]);
-                        setLocationLoading(false);
-                        
-                        // Si la carte est déjà chargée, ajouter un marqueur et centrer
-                        if (mapInstance.current) {
-                            addUserPositionMarker([longitude, latitude]);
+            return new Promise((resolve) => {
+                setLocationLoading(true);
+                if ("geolocation" in navigator) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const { latitude, longitude } = position.coords;
+                            setUserPosition([longitude, latitude]);
+                            setLocationLoading(false);
+                            resolve([longitude, latitude]);
+                        },
+                        (error) => {
+                            console.error("Erreur de géolocalisation:", error);
+                            setLocationLoading(false);
+                            resolve(GRENOBLE_CENTER); // Utiliser le centre de Grenoble par défaut
+                        },
+                        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                    );
+                } else {
+                    setLocationLoading(false);
+                    resolve(GRENOBLE_CENTER);
+                }
+            });
+        };
+
+        // Initialiser la carte et la position en même temps
+        const initMapAndPosition = async () => {
+            // Obtenir la position d'abord
+            const position = await getUserPosition();
+            
+            // Ensuite initialiser la carte
+            if (!mapInstance.current && mapContainerRef.current) {
+                setMapLoading(true);
+                
+                mapInstance.current = new mapboxgl.Map({
+                    container: mapContainerRef.current,
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: position, // Utiliser la position obtenue
+                    zoom: 15,
+                    maxBounds: getBoundsAround(position, 15)
+                });
+
+                const map = mapInstance.current;
+
+                map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+                map.on('load', () => {
+                    console.log('Carte chargée, chargement des données...');
+
+                    fetchTransportLines();
+
+                    map.addSource('transports', {
+                        type: 'geojson',
+                        data: '/data/data_transport_commun_grenoble.geojson'
+                    });
+
+                    map.addLayer({
+                        id: 'transport-lines',
+                        type: 'line',
+                        source: 'transports',
+                        filter: ['==', ['geometry-type'], 'LineString'],
+                        paint: {
+                            'line-color': '#3366FF',
+                            'line-width': 3,
+                            'line-opacity': 0.8
                         }
-                    },
-                    (error) => {
-                        console.error("Erreur de géolocalisation:", error);
-                        setLocationLoading(false);
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
+                    });
+
+                    map.addLayer({
+                        id: 'transport-stops',
+                        type: 'circle',
+                        source: 'transports',
+                        filter: ['==', ['geometry-type'], 'Point'],
+                        paint: {
+                            'circle-radius': 6,
+                            'circle-color': '#FF5733',
+                            'circle-opacity': 0.8
+                        }
+                    });
+
+                    // Code existant pour les popups et événements
+                    map.on('click', 'transport-stops', (e) => {
+                        const coordinates = e.features[0].geometry.coordinates.slice();
+                        const properties = e.features[0].properties;
+                        
+                        let popupContent = '<div class="popup-content">';
+                        
+                        // Ajouter les propriétés pertinentes au popup
+                        for (const [key, value] of Object.entries(properties)) {
+                            if (value && typeof value === 'string') {
+                                popupContent += `<b>${key}:</b> ${value}<br>`;
+                            }
+                        }
+                        
+                        // Ajouter boutons pour définir comme origine/destination
+                        popupContent += `
+                            <div class="popup-actions">
+                                <button class="popup-button" onclick="document.getElementById('start-point').value='${properties.name || coordinates.join(',')}'; document.getElementById('start-point').dispatchEvent(new Event('change'))">Définir comme origine</button>
+                                <button class="popup-button" onclick="document.getElementById('end-point').value='${properties.name || coordinates.join(',')}'; document.getElementById('end-point').dispatchEvent(new Event('change'))">Définir comme destination</button>
+                            </div>
+                        `;
+                        
+                        popupContent += '</div>';
+                        
+                        // Ajuster le zoom si nécessaire
+                        while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                            coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                        }
+                        
+                        new mapboxgl.Popup()
+                            .setLngLat(coordinates)
+                            .setHTML(popupContent)
+                            .addTo(map);
+                    });
+                    
+                    map.on('mouseenter', 'transport-stops', () => {
+                        map.getCanvas().style.cursor = 'pointer';
+                    });
+                    
+                    map.on('mouseleave', 'transport-stops', () => {
+                        map.getCanvas().style.cursor = '';
+                    });
+
+                    map.addSource('route', {
+                        type: 'geojson',
+                        data: {
+                            type: 'FeatureCollection',
+                            features: []
+                        }
+                    });
+                    routeSourceRef.current = 'route';
+
+                    map.addLayer({
+                        id: 'route',
+                        type: 'line',
+                        source: 'route',
+                        layout: {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        paint: {
+                            'line-color': ['match', 
+                                ['get', 'mode'],
+                                'WALK', '#6CB1FF',
+                                'TRANSIT', '#FF9900',
+                                'SUBWAY', '#FF0000',
+                                'BUS', '#009900',
+                                'TRAM', '#9900FF',
+                                '#6CB1FF'
+                            ],
+                            'line-width': 5,
+                            'line-opacity': 0.8
+                        }
+                    });
+
+                    // Ajouter le marqueur de position utilisateur une seule fois
+                    if (position) {
+                        // Créer un élément personnalisé pour le marqueur
+                        const el = document.createElement('div');
+                        el.className = 'user-position-marker';
+                        
+                        // Créer le nouveau marqueur
+                        userPositionMarkerRef.current = new mapboxgl.Marker({
+                            element: el,
+                            anchor: 'center'
+                        })
+                        .setLngLat(position)
+                        .addTo(map)
+                        .setPopup(new mapboxgl.Popup().setHTML(
+                            '<div class="popup-content"><h3>Vous êtes ici</h3></div>'
+                        ));
+                    }
+
+                    map.once('idle', () => {
+                        console.log('Carte et données entièrement chargées');
+                        setMapLoading(false);
+                    });
+                });
+
+                map.on('error', (e) => {
+                    console.error('Erreur de chargement de la carte:', e);
+                    setMapLoading(false);
+                });
             }
         };
-        
-        getUserPosition();
-    }, []);
 
-    // Ajouter un marqueur pour la position de l'utilisateur
-    const addUserPositionMarker = (coords) => {
-        // Supprimer l'ancien marqueur s'il existe
-        if (userPositionMarkerRef.current) {
-            userPositionMarkerRef.current.remove();
-        }
-        
-        // Créer un élément personnalisé pour le marqueur
-        const el = document.createElement('div');
-        el.className = 'user-position-marker';
-        
-        // Créer le nouveau marqueur
-        userPositionMarkerRef.current = new mapboxgl.Marker({
-            element: el,
-            anchor: 'center'
-        })
-        .setLngLat(coords)
-        .addTo(mapInstance.current)
-        .setPopup(new mapboxgl.Popup().setHTML(
-            '<div class="popup-content"><h3>Vous êtes ici</h3></div>'
-        ));
-
-        // Centrer la carte sur la position de l'utilisateur
-        mapInstance.current.flyTo({
-            center: coords,
-            zoom: 15,
-            essential: true
-        });
-    };
-
-    // Initialisation de la carte
-    useEffect(() => {
-        if (!mapInstance.current && mapContainerRef.current) {
-            setMapLoading(true);
-            
-            mapInstance.current = new mapboxgl.Map({
-                container: mapContainerRef.current,
-                style: 'mapbox://styles/mapbox/streets-v12',
-                center: GRENOBLE_CENTER,
-                zoom: 13,
-                maxBounds: getBoundsAround(GRENOBLE_CENTER, 15)
-            });
-
-            const map = mapInstance.current;
-
-            map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-            map.on('styledata', () => {
-                console.log('Style de la carte en cours de chargement...');
-            });
-
-            map.on('load', () => {
-                console.log('Carte chargée, chargement des données...');
-
-                fetchTransportLines();
-
-                map.addSource('transports', {
-                    type: 'geojson',
-                    data: '/data/data_transport_commun_grenoble.geojson'
-                });
-
-                map.addLayer({
-                    id: 'transport-lines',
-                    type: 'line',
-                    source: 'transports',
-                    filter: ['==', ['geometry-type'], 'LineString'],
-                    paint: {
-                        'line-color': '#3366FF',
-                        'line-width': 3,
-                        'line-opacity': 0.8
-                    }
-                });
-
-                map.addLayer({
-                    id: 'transport-stops',
-                    type: 'circle',
-                    source: 'transports',
-                    filter: ['==', ['geometry-type'], 'Point'],
-                    paint: {
-                        'circle-radius': 6,
-                        'circle-color': '#FF5733',
-                        'circle-opacity': 0.8
-                    }
-                });
-
-                // Gestion des popups sur les points (code existant)
-                map.on('click', 'transport-stops', (e) => {
-                    const coordinates = e.features[0].geometry.coordinates.slice();
-                    const properties = e.features[0].properties;
-                    
-                    let popupContent = '<div class="popup-content">';
-                    
-                    // Ajouter les propriétés pertinentes au popup
-                    for (const [key, value] of Object.entries(properties)) {
-                        if (value && typeof value === 'string') {
-                            popupContent += `<b>${key}:</b> ${value}<br>`;
-                        }
-                    }
-                    
-                    // Ajouter boutons pour définir comme origine/destination
-                    popupContent += `
-                        <div class="popup-actions">
-                            <button class="popup-button" onclick="document.getElementById('start-point').value='${properties.name || coordinates.join(',')}'; document.getElementById('start-point').dispatchEvent(new Event('change'))">Définir comme origine</button>
-                            <button class="popup-button" onclick="document.getElementById('end-point').value='${properties.name || coordinates.join(',')}'; document.getElementById('end-point').dispatchEvent(new Event('change'))">Définir comme destination</button>
-                        </div>
-                    `;
-                    
-                    popupContent += '</div>';
-                    
-                    // Ajuster le zoom si nécessaire
-                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
-                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
-                    }
-                    
-                    new mapboxgl.Popup()
-                        .setLngLat(coordinates)
-                        .setHTML(popupContent)
-                        .addTo(map);
-                });
-                
-                map.on('mouseenter', 'transport-stops', () => {
-                    map.getCanvas().style.cursor = 'pointer';
-                });
-                
-                map.on('mouseleave', 'transport-stops', () => {
-                    map.getCanvas().style.cursor = '';
-                });
-
-                map.addSource('route', {
-                    type: 'geojson',
-                    data: {
-                        type: 'FeatureCollection',
-                        features: []
-                    }
-                });
-                routeSourceRef.current = 'route';
-
-                map.addLayer({
-                    id: 'route',
-                    type: 'line',
-                    source: 'route',
-                    layout: {
-                        'line-join': 'round',
-                        'line-cap': 'round'
-                    },
-                    paint: {
-                        'line-color': ['match', 
-                            ['get', 'mode'],
-                            'WALK', '#6CB1FF',
-                            'TRANSIT', '#FF9900',
-                            'SUBWAY', '#FF0000',
-                            'BUS', '#009900',
-                            'TRAM', '#9900FF',
-                            '#6CB1FF'
-                        ],
-                        'line-width': 5,
-                        'line-opacity': 0.8
-                    }
-                });
-
-                map.once('idle', () => {
-                    console.log('Carte et données entièrement chargées');
-                    setMapLoading(false);
-                    
-                    // Si la position de l'utilisateur est disponible, l'afficher
-                    if (userPosition) {
-                        addUserPositionMarker(userPosition);
-                    }
-                });
-            });
-
-            map.on('error', (e) => {
-                console.error('Erreur de chargement de la carte:', e);
-                setMapLoading(false);
-            });
-        }
+        initMapAndPosition();
 
         return () => {
             if (mapInstance.current) {
@@ -256,7 +242,7 @@ const MapComponent = () => {
                 mapInstance.current = null;
             }
         };
-    }, [userPosition]);
+    }, []); // Dépendances vides pour ne s'exécuter qu'une seule fois
 
     // Utilisation des fonctions existantes...
     const getBoundsAround = (center, radiusInKm) => {
@@ -694,34 +680,83 @@ const calculateRoute = async () => {
         }
     };
 
-    // Fonction pour centrer la carte sur la position de l'utilisateur
-    const centerOnUserPosition = () => {
-        if (userPosition) {
-            mapInstance.current.flyTo({
-                center: userPosition,
-                zoom: 15,
-                essential: true
-            });
-        } else {
-            // Si la position n'est pas encore disponible, la demander
-            setLocationLoading(true);
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        setUserPosition([longitude, latitude]);
-                        addUserPositionMarker([longitude, latitude]);
-                        setLocationLoading(false);
-                    },
-                    (error) => {
-                        console.error("Erreur de géolocalisation:", error);
-                        setLocationLoading(false);
-                        alert("Impossible de déterminer votre position");
-                    }
-                );
-            }
-        }
+    const TransportToggle = ({ showTransport, toggleTransport }) => {
+        return (
+            <Toggle 
+                id="transport-toggle"
+                labelText="" 
+                labelA="" 
+                labelB=""
+                toggled={showTransport}
+                onToggle={toggleTransport}
+                size="sm"
+                aria-label="Afficher/masquer les transports"
+                className="transport-toggle"
+            />
+        );
     };
+
+    // Modifier la fonction centerOnUserPosition pour éviter le rechargement
+
+const centerOnUserPosition = () => {
+    if (userPosition) {
+        mapInstance.current.flyTo({
+            center: userPosition,
+            zoom: 15,
+            essential: true
+        });
+        
+        // Si besoin de réafficher le popup
+        if (userPositionMarkerRef.current) {
+            userPositionMarkerRef.current.togglePopup();
+        }
+    } else {
+        // Si la position n'est pas encore disponible, la demander sans recharger la carte
+        setLocationLoading(true);
+        if ("geolocation" in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude } = position.coords;
+                    const newPosition = [longitude, latitude];
+                    setUserPosition(newPosition);
+                    
+                    // Mettre à jour la position du marqueur existant plutôt que d'en créer un nouveau
+                    if (userPositionMarkerRef.current) {
+                        userPositionMarkerRef.current.setLngLat(newPosition);
+                    } else {
+                        // Créer le marqueur seulement s'il n'existe pas
+                        const el = document.createElement('div');
+                        el.className = 'user-position-marker';
+                        
+                        userPositionMarkerRef.current = new mapboxgl.Marker({
+                            element: el,
+                            anchor: 'center'
+                        })
+                        .setLngLat(newPosition)
+                        .addTo(mapInstance.current)
+                        .setPopup(new mapboxgl.Popup().setHTML(
+                            '<div class="popup-content"><h3>Vous êtes ici</h3></div>'
+                        ));
+                    }
+                    
+                    // Centrer la carte sur la nouvelle position
+                    mapInstance.current.flyTo({
+                        center: newPosition,
+                        zoom: 15,
+                        essential: true
+                    });
+                    
+                    setLocationLoading(false);
+                },
+                (error) => {
+                    console.error("Erreur de géolocalisation:", error);
+                    setLocationLoading(false);
+                    alert("Impossible de déterminer votre position");
+                }
+            );
+        }
+    }
+};
 
     return (
         <div className="map-container">
@@ -756,6 +791,10 @@ const calculateRoute = async () => {
                             disabled={locationLoading}
                             className="location-button"
                         />
+                        <TransportToggle 
+                            showTransport={showTransport} 
+                            toggleTransport={handleToggleTransport} 
+                        />
                     </div>
                     
                     {searchResults.length > 0 && (
@@ -788,6 +827,12 @@ const calculateRoute = async () => {
                             hasIconOnly
                         />
                         <h2 className="route-panel-title">{selectedDestination?.text || endPoint}</h2>
+                        <div className="route-panel-actions">
+                            <TransportToggle 
+                                showTransport={showTransport} 
+                                toggleTransport={handleToggleTransport} 
+                            />
+                        </div>
                     </div>
                     
                     <div className="route-form">
