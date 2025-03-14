@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { Button, Tile, TextInput } from "@carbon/react";
-import { TrashCan, Edit } from "@carbon/icons-react";
+import { TrashCan, ArrowDown, Home } from "@carbon/icons-react";
 import { authStates, withAuth } from "../components/auth";
 import { getUserData, updateUserData } from "../utils/firebase";
 import Loader from "../components/loader";
@@ -14,6 +14,8 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYmVyZ2VvbmgiLCJhIjoiY204OG0zdWJhMGx4MzJtczVjY
 
 // Coordonnées du centre de Grenoble
 const GRENOBLE_CENTER = [5.724524, 45.188529]; // [longitude, latitude]
+
+const GRENOBLE_BBOX = [5.6, 45.1, 5.9, 45.3]; // Ajustez ces valeurs selon vos besoins
 
 function Locations(props) {
   const mapContainerRef = useRef(null);
@@ -118,29 +120,46 @@ function Locations(props) {
 
   // Fonction pour rechercher des adresses en temps réel
   const searchAddressWithDebounce = (value) => {
-    // Mettre à jour le champ de recherche immédiatement
     setSearchAddress(value);
     
-    // Effacer tout timeout précédent
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
     
-    // N'exécuter la recherche que si le champ n'est pas vide
     if (value.trim() === '') {
       setSearchResults([]);
       return;
     }
     
-    // Définir un délai avant de lancer la recherche (300ms)
     searchTimeoutRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
+        // URL avec les paramètres optimisés pour Grenoble
         const response = await fetch(
-          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${mapboxgl.accessToken}&proximity=${GRENOBLE_CENTER.join(',')}&country=fr`
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${mapboxgl.accessToken}`
+          + `&proximity=${GRENOBLE_CENTER.join(',')}`  // Centre de recherche
+          + `&bbox=${GRENOBLE_BBOX.join(',')}`         // Zone de restriction
+          + `&country=fr`                              // Limiter à la France
+          + `&types=address,poi,postcode,place`        // Types de résultats à inclure
+          + `&language=fr`                             // Résultats en français
+          + `&limit=5`                                 // Limiter à 5 résultats
         );
+        
         const data = await response.json();
-        setSearchResults(data.features || []);
+        
+        // Filtrer les résultats pour être sûr qu'ils sont dans la zone voulue
+        const filteredResults = data.features.filter(feature => {
+          // Vérifier si les coordonnées sont dans la bounding box
+          const [lng, lat] = feature.center;
+          return (
+            lng >= GRENOBLE_BBOX[0] && 
+            lat >= GRENOBLE_BBOX[1] && 
+            lng <= GRENOBLE_BBOX[2] && 
+            lat <= GRENOBLE_BBOX[3]
+          );
+        });
+        
+        setSearchResults(filteredResults);
       } catch (error) {
         console.error('Erreur lors de la recherche d\'adresse:', error);
       } finally {
@@ -316,37 +335,47 @@ function Locations(props) {
         
         <div className="locations-list">
           {favoriteLocations.length === 0 ? (
-            <p>Aucun lieu favori enregistré. Cliquez sur la carte pour ajouter un lieu.</p>
+            <p>Aucun lieu favori enregistré. Cliquez sur la carte ou cherchez via la barre de recherche pour ajouter un lieu.</p>
           ) : (
             favoriteLocations.map((location) => (
-              <Tile key={location.id} className="location-item">
-                <h3>{location.name}</h3>
-                <p>{location.address}</p>
+            <Tile key={location.id} className="location-tile">
+                <div className="location-info">
+                  <h4>{location.name}</h4>
+                  <p className="location-address">{location.address}</p>
+                </div>
                 
                 <div className="location-actions">
-                  <Button
-                    kind="ghost"
-                    size="sm"
-                    renderIcon={TrashCan}
-                    iconDescription="Supprimer"
-                    onClick={() => deleteLocation(location.id)}
-                  >
-                    Supprimer
-                  </Button>
-                  <Button
-                    kind="tertiary"
-                    size="sm"
-                    onClick={() => locationAs(location, 'from')}
-                  >
-                    Départ
-                  </Button>
-                  <Button
-                    kind="tertiary"
-                    size="sm"
-                    onClick={() => locationAs(location, 'to')}
-                  >
-                    Arrivée
-                  </Button>
+                    <div className="location-buttons-row">
+                        <Button
+                        kind="ghost"
+                        size="sm"
+                        renderIcon={TrashCan}
+                        iconDescription="Supprimer"
+                        hasIconOnly
+                        tooltipPosition="bottom"
+                        tooltipAlignment="center"
+                        onClick={() => deleteLocation(location.id)}
+                        />
+                    </div>
+                    
+                    <div className="location-buttons-row">
+                        <Button
+                        kind="tertiary"
+                        size="sm"
+                        renderIcon={Home}
+                        onClick={() => props.setFromLocation?.(location)}
+                        >
+                        Départ
+                        </Button>
+                        <Button
+                        kind="tertiary"
+                        size="sm"
+                        renderIcon={ArrowDown}
+                        onClick={() => props.setToLocation?.(location)}
+                        >
+                        Arrivée
+                        </Button>
+                    </div>
                 </div>
               </Tile>
             ))

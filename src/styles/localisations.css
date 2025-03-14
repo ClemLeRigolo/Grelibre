@@ -93,3 +93,53 @@
   .search-result-item p {
     margin: 0;
   }
+
+  .location-tile {
+    margin-bottom: 1rem;
+    padding: 1rem;
+  }
+  
+  .location-info {
+    margin-bottom: 0.75rem;
+  }
+  
+  .location-info h4 {
+    margin: 0 0 0.25rem 0;
+    font-weight: 600;
+  }
+  
+  .location-address {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #525252;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .location-actions {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .location-buttons-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+  
+  .location-buttons-row button {
+    min-width: 0;
+    padding: 0.5rem;
+  }
+  
+  /* Pour les boutons Départ et Arrivée */
+  .location-buttons-row:last-child {
+    gap: 0.5rem;
+  }
+  
+  .location-buttons-row:last-child button {
+    flex: 1;
+    min-width: 0;
+    font-size: 0.75rem;
+  }
