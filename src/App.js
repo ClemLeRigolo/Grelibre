@@ -13,6 +13,7 @@ import Terms from "./pages/terms";
 import Reset from "./pages/reset";
 import Verify from "./pages/verify";
 import Profile from "./pages/profile";
+import LoaderTest from "./pages/loaderTest";
 import Locations from "./pages/localisations";
 
 import "./App.css";
@@ -66,6 +67,7 @@ function App(props) {
             />
             <Route path="/terms" component={Terms} />
             <Route path="/profile" component={Profile} />
+            <Route path="/loader-test" component={LoaderTest} />
             <Route path="/localisations" component={Locations} />
             <Route path="/" component={Home} />
           </Switch>

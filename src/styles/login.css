@@ -36,3 +36,70 @@
   position: relative;
   width: 100vw;
 }
+
+/* Ajouter ces styles pour améliorer la disposition */
+
+/* Mise en page en colonnes */
+.auth-form-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 672px) {
+  .auth-form-row {
+    flex-direction: row;
+    gap: 1rem;
+  }
+  
+  .auth-form-col {
+    flex: 1;
+    width: 50%;
+  }
+}
+
+/* Réduire les espacements verticaux */
+.form-spacer-small {
+  height: 1rem;
+}
+
+/* Optimiser la taille du conteneur des règles de mot de passe */
+.password-rules-container {
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: #f4f4f4;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+/* Faire en sorte que le conteneur d'authentification utilise moins d'espace vertical */
+.auth-container {
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.auth-tile {
+  padding: 1.5rem !important;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+}
+
+/* Réduire la taille du titre et de l'en-tête */
+.auth-header {
+  margin-bottom: 1rem;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+}
+
+/* Réduire l'espace entre les éléments du Stack */
+.auth-tile .cds--stack {
+  gap: 4 !important; /* Réduire le gap du Stack */
+}
+
+/* Optimiser l'affichage des notifications d'erreur */
+.auth-notification {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem !important;
+}
