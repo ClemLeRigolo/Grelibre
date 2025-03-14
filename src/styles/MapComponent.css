@@ -600,3 +600,16 @@ input:checked + .slider:before {
       width: calc(100% - 2rem);
     }
   }
+
+  .transport-toggle {
+    margin-left: 0.5rem;
+}
+
+.transport-toggle .bx--toggle__switch {
+    margin-top: 0;
+}
+
+/* Pour l'alignement dans le panneau d'itinéraire */
+.route-panel-actions .transport-toggle {
+    align-self: center;
+}
