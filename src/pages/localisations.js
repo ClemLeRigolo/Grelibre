@@ -62,6 +62,33 @@ function Locations(props) {
       // Événement au clic sur la carte pour ajouter un nouveau lieu
       map.on('click', (e) => {
         const coordinates = [e.lngLat.lng, e.lngLat.lat];
+
+        // First, remove any existing temporary click marker
+        if (window.tempClickMarker) {
+            window.tempClickMarker.remove();
+        }
+
+        // Add a new marker at the clicked location
+        const marker = new mapboxgl.Marker({
+            color: "#3470cc",
+            draggable: true
+        })
+        .setLngLat(coordinates)
+        .addTo(map);
+        
+        // Store reference to this temporary marker
+        window.tempClickMarker = marker;
+        
+        // Add a popup with options
+        const popup = new mapboxgl.Popup({ offset: 25 })
+            .setHTML(`
+            <div>
+                <p><strong>Position:</strong> ${coordinates[0].toFixed(6)}, ${coordinates[1].toFixed(6)}</p>
+            </div>
+            `);
+        
+        marker.setPopup(popup);
+        marker.togglePopup(); // Show the popup immediately
         
         // Géocoder les coordonnées pour obtenir l'adresse
         fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${coordinates[0]},${coordinates[1]}.json?access_token=${mapboxgl.accessToken}`)
@@ -71,6 +98,14 @@ function Locations(props) {
             setNewLocationCoords(coordinates);
             setNewLocationAddress(address);
             setNewLocationName('');
+
+            // Update popup with the address
+            popup.setHTML(`
+                <div>
+                <p><strong>Position:</strong> ${coordinates[0].toFixed(6)}, ${coordinates[1].toFixed(6)}</p>
+                <p><strong>Adresse:</strong> ${address}</p>
+                </div>
+            `);
           });
       });
 
@@ -240,6 +275,11 @@ function Locations(props) {
       setNewLocationName('');
       setNewLocationAddress('');
       setNewLocationCoords([]);
+      // Remove the temporary marker
+      if (window.tempClickMarker) {
+        window.tempClickMarker.remove();
+        window.tempClickMarker = null;
+      }
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
       alert('Erreur lors de la sauvegarde');
