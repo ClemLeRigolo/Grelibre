@@ -1,13 +1,26 @@
 import React from 'react';
 import { Link, Redirect } from "react-router-dom";
+import {
+  TextInput,
+  Button,
+  InlineNotification,
+  Form,
+  Stack,
+  FormGroup,
+  Tile,
+  Checkbox
+} from "@carbon/react";
+import { UserFollow, ArrowLeft } from "@carbon/icons-react";
+
 import { authStates, withAuth } from "../components/auth";
+import fr from "../utils/i18n";
+import Loader from "../components/loader";
 import { createNewUser } from "../utils/firebase";
 import { validateEmailPassword } from "../utils/helpers";
-import Loader from "../components/loader";
 import PasswordCheck from "../components/passwordCheck";
+import Password from '../components/password';
 
 import "../styles/login.css";
-import Password from '../components/password';
 
 class SignUp extends React.Component {
   constructor(props) {
@@ -19,8 +32,7 @@ class SignUp extends React.Component {
       password: "",
       retype: "",
       error: "",
-      selectedImage: "ensimag", // Par défaut, sélectionnez la première image
-      selectedColor: "#008437", // Par défaut, sélectionnez la première couleur
+      selectedImage: "ensimag",
       passwordRules: {
         length: false,
         uppercase: false,
@@ -29,8 +41,8 @@ class SignUp extends React.Component {
       },
       samePasswords: false,
       acceptTerms: false,
+      loading: false
     };
-    document.documentElement.style.setProperty('--selected-color', this.state.selectedColor)
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.handleTermsChange = this.handleTermsChange.bind(this);
@@ -63,7 +75,6 @@ class SignUp extends React.Component {
     }
   }
 
-
   handleRetype(retype) {
     if (retype) {
       this.setState({retype});
@@ -72,18 +83,22 @@ class SignUp extends React.Component {
   }
 
   samePasswords(password, retype) {
-    if (password !== retype) {
-      this.setState({samePasswords : false});
+    if (retype && password !== retype) {
       this.setState({
-        error : "Les mots de passe ne correspondent pas"
+        samePasswords: false,
+        error: "Les mots de passe ne correspondent pas"
       });
     }
-    else {
-      this.setState({samePasswords : true});
+    else if (retype) {
       this.setState({
-        error : ""
+        samePasswords: true,
+        error: ""
       });
     }
+  }
+
+  handleTermsChange(event) {
+    this.setState({ acceptTerms: event.target.checked });
   }
 
   handleSubmit(event) {
@@ -107,23 +122,25 @@ class SignUp extends React.Component {
       return;
     }
 
+    this.setState({ loading: true });
+
     createNewUser(this.state.email, this.state.password, this.state.surname, this.state.name)
       .then(() => {
         console.log("Signed Up!");
-        //sendVerificationEmail();
       })
       .catch(e => {
         console.log("Error signing up", e);
+        let errorMessage = "Une erreur s'est produite lors de l'inscription";
+        
         if (e.code === "auth/email-already-in-use") {
-          this.setState({
-            error: "Adresse e-mail déjà utilisée",
-          });
+          errorMessage = "Cette adresse e-mail est déjà utilisée";
         }
+        
+        this.setState({
+          error: errorMessage,
+          loading: false
+        });
       });
-  }
-
-  handleTermsChange(event) {
-    this.setState({ acceptTerms: event.target.checked });
   }
 
   render() {
@@ -135,71 +152,148 @@ class SignUp extends React.Component {
       return <Redirect to="/" />;
     }
 
-    const errorMsg = this.state.error;
+    const { error, loading, passwordRules, acceptTerms } = this.state;
+    const isPasswordValid = Object.values(passwordRules).every(rule => rule === true);
 
     return (
-      <div className="container">
-        <form onSubmit={this.handleSubmit}>
-          <div className="content">
-            <div className="login">
-              <h2>Inscription</h2>
-
-              <input
-                type="text"
-                placeholder="Prénom"
-                name="name"
-                onChange={this.handleInputChange}
-                required
-                className="easy-nput name"
-              />
-
-              <input
-                type="text"
-                placeholder="Nom"
-                name="surname"
-                onChange={this.handleInputChange}
-                className="easy-nput name"
-                required
-              />
-
-              <input
-                type="text"
-                placeholder="Email"
-                name="email"
-                onChange={this.handleInputChange}
-                className="easy-nput"
-                required
-              />
-
-              <Password onPasswordTextChanged={(password) => this.handlePassword(password)} placeholder="Mot de passe" required={true} name="password"/>
-              <Password onPasswordTextChanged={(retype) => this.handleRetype(retype)} placeholder="Confirmer le mot de passe" required={true} name="retype"/>
-
-              <PasswordCheck props={this.state.passwordRules}/>
-
-              {/* <label>
-                <input
-                  name="acceptTerms"
-                  type="checkbox"
-                  checked={this.state.acceptTerms}
-                  onChange={this.handleTermsChange} />
-                J'accepte les conditions d'utilisation
-              </label> */}
-
-              {errorMsg && <p className="error">Erreur: {errorMsg}</p>}
-              <div className="log-button-container">
-                {/* Checkbox */}
-                <div className="checkbox-container">
-                  <input type="checkbox" id="acceptTerms" name="acceptTerms" onChange={this.handleTermsChange} required/>
-                  <label htmlFor="acceptTerms">J'accepte les <Link to="/terms">conditions d'utilisation</Link></label>
-                </div>
-                <button type="submit" disabled={!this.state.acceptTerms} className="log-button">S'inscrire</button>
-              </div>
-
-              <p>Vous avez déjà un compte ?</p>
-              <Link to="/login">Se connecter</Link>
+      <div className="auth-container">
+        {/* Bouton de retour vers l'application principale */}
+        <Link to="/" className="auth-back-button">
+          <ArrowLeft size={20} /> Retour à l'application
+        </Link>
+        
+        <Tile className="auth-tile">
+          <Stack gap={7}>
+            <div className="auth-header">
+              <UserFollow size={32} className="auth-icon" />
+              <h1 className="auth-title">Inscription</h1>
             </div>
-          </div>
-        </form>
+            
+            <Form onSubmit={this.handleSubmit}>
+              {error && (
+                <InlineNotification
+                  kind="error"
+                  title="Erreur"
+                  subtitle={error}
+                  hideCloseButton={false}
+                  onCloseButtonClick={() => this.setState({ error: "" })}
+                  lowContrast
+                  className="auth-notification"
+                />
+              )}
+              
+
+
+              <FormGroup legendText="">
+                <div className="auth-form-row">
+                  <div className="auth-form-col">
+                    <TextInput
+                      id="name"
+                      name="name"
+                      labelText="Prénom"
+                      placeholder="Prénom"
+                      onChange={this.handleInputChange}
+                      required
+                    />
+                  </div>
+                  
+                  <div className="auth-form-col">
+                    <TextInput
+                      id="surname"
+                      name="surname"
+                      labelText="Nom"
+                      placeholder="Nom"
+                      onChange={this.handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="form-spacer-small" />
+                
+                <TextInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  labelText="Email"
+                  placeholder="Email"
+                  onChange={this.handleInputChange}
+                  required
+                />
+                
+                <div className="form-spacer-small" />
+                
+                <div className="auth-form-row">
+                  <div className="auth-form-col">
+                    <div className="password-container">
+                      <Password 
+                        onPasswordTextChanged={(password) => this.handlePassword(password)} 
+                        placeholder="Mot de passe" 
+                        labelText="Mot de passe"
+                        required={true} 
+                        name="password"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="auth-form-col">
+                    <div className="password-container">
+                      <Password 
+                        onPasswordTextChanged={(retype) => this.handleRetype(retype)} 
+                        placeholder="Confirmer" 
+                        labelText="Confirmer le mot de passe"
+                        required={true} 
+                        name="retype"
+                      />
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="password-rules-container">
+                  <PasswordCheck props={passwordRules} />
+                </div>
+                
+                <div className="form-spacer-small" />
+                
+                <Checkbox
+                  id="acceptTerms"
+                  labelText={
+                    <span>
+                      J'accepte les <Link to="/terms" className="auth-link">conditions d'utilisation</Link>
+                    </span>
+                  }
+                  checked={acceptTerms}
+                  onChange={this.handleTermsChange}
+                  required
+                />
+              </FormGroup>
+              
+              <Button
+                type="submit"
+                className="auth-submit-button"
+                disabled={loading || !isPasswordValid || !acceptTerms}
+              >
+                {loading ? "Inscription en cours..." : "S'inscrire"}
+              </Button>
+              
+              <div className="auth-alt-option">
+                <p>Vous avez déjà un compte ?</p>
+                <Link to="/login" className="auth-link">Se connecter</Link>
+              </div>
+              
+              <div className="auth-skip-option">
+                <Button 
+                  kind="ghost" 
+                  as={Link} 
+                  to="/"
+                  className="auth-skip-button"
+                >
+                  Continuer sans s'inscrire
+                </Button>
+              </div>
+            </Form>
+          </Stack>
+        </Tile>
       </div>
     );
   }

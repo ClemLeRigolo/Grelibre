@@ -1,41 +1,21 @@
-.loader {
-    margin: auto;
-    border: 16px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 16px solid #008437;
-    width: 120px;
-    height: 120px;
-    -webkit-animation: spin 2s linear infinite; /* Safari */
-    animation: spin 2s linear infinite;
-  }
-  
-  .mini-loader {
-    margin: auto;
-    border: 3px solid #f3f3f3;
-    border-radius: 50%;
-    border-top: 3px solid lightblue;
-    width: 18px;
-    height: 18px;
-    -webkit-animation: spin 2s linear infinite; /* Safari */
-    animation: spin 2s linear infinite;
-  }
-  
-  /* Safari */
-  @-webkit-keyframes spin {
-    0% {
-      -webkit-transform: rotate(0deg);
-    }
-    100% {
-      -webkit-transform: rotate(360deg);
-    }
-  }
-  
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-  
+.carbon-loader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  width: 100%;
+  background-color: #f4f4f4;
+}
+
+/* Pour les cas où le loader est utilisé dans un conteneur plus petit */
+.loader-inline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 1rem;
+}
+
+/* Personnaliser la couleur du loader si nécessaire */
+.carbon-loader-container .bx--loading {
+  stroke: var(--selected-color, #0f62fe);
+}
