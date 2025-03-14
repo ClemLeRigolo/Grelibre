@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { Redirect } from "react-router-dom";
 
 import ProtectedRoute from './components/protectedRoute';
+import AppHeader from './components/AppHeader';
 import Home from "./pages/home";
 import Login from "./pages/login";
 import Signup from "./pages/signup";
@@ -17,8 +18,7 @@ import "./styles/scrollbar.css";
 
 import { initialize } from "./utils/firebase";
 
-
-document.documentElement.style.setProperty('--selected-color', '#008437');
+document.documentElement.style.setProperty('--selected-color', '#0f62fe');
 
 // Initialisation de firebase avec les paramètres importants
 initialize();
@@ -41,19 +41,23 @@ function App(props) {
 
   return (
     <Router>
+      <div className="app-container">
         <Switch>
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Signup} />
           <Route path="/reset" component={Reset} />
           <Route path="/verify" render={(props) => 
             <Verify {...props} />}
-             />
+          />
           <Route path="/terms" component={Terms} />
-          <ProtectedRoute path="/" component={Home} />
+          <Route path="/">
+            <AppHeader />
+            <ProtectedRoute path="/" component={Home} />
+          </Route>
         </Switch>
+      </div>
     </Router>
   );
 }
-
 
 export default withAuth(App);

@@ -29,7 +29,7 @@ class Home extends React.Component {
 
     return (
       <div className="home-container">
-        <h1>Carte de Grenoble avec données mTag</h1>
+        {/* <h1>Carte de Grenoble avec données mTag</h1> */}
         <div className="map-wrapper">
           <MapComponent />
         </div>

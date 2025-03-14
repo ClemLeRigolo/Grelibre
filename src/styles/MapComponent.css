@@ -127,3 +127,170 @@ input:checked + .slider:before {
         height: 40vh;
     }
 }
+
+.map-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 48px);
+    position: relative;
+  }
+  
+  .map {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .sidebar {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 320px;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  
+  .carbon-styled {
+    font-family: 'IBM Plex Sans', sans-serif;
+    color: #161616;
+  }
+  
+  .carbon-styled h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #161616;
+  }
+  
+  .control-section {
+    margin-bottom: 2rem;
+  }
+  
+  .toggle-container {
+    display: flex;
+    align-items: center;
+  }
+  
+  .carbon-toggle {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 24px;
+    margin-right: 1rem;
+  }
+  
+  .carbon-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-label {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #8d8d8d;
+    transition: .4s;
+    border-radius: 24px;
+  }
+  
+  .toggle-button {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .toggle-label {
+    background-color: #0f62fe;
+  }
+  
+  input:checked + .toggle-label .toggle-button {
+    transform: translateX(24px);
+  }
+  
+  .carbon-input {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  
+  .carbon-input input {
+    height: 40px;
+    width: 100%;
+    border: 1px solid #8d8d8d;
+    padding: 0 1rem;
+    background: transparent;
+    font-size: 0.875rem;
+    color: #161616;
+  }
+  
+  .carbon-input input:focus {
+    outline: 2px solid #0f62fe;
+    outline-offset: -2px;
+  }
+  
+  .carbon-input label {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    background-color: white;
+    padding: 0 0.25rem;
+    color: #6f6f6f;
+    transition: all 0.2s;
+    pointer-events: none;
+  }
+  
+  .carbon-input input:focus + label,
+  .carbon-input input:not(:placeholder-shown) + label {
+    top: 0;
+    font-size: 0.75rem;
+  }
+  
+  .carbon-button {
+    height: 40px;
+    background-color: #0f62fe;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    padding: 0 1rem;
+    transition: background-color 0.2s;
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+  
+  .carbon-button:hover {
+    background-color: #0353e9;
+  }
+  
+  .route-info {
+    padding: 1rem;
+    background-color: #f4f4f4;
+    font-size: 0.875rem;
+    border-left: 4px solid #0f62fe;
+  }
+  
+  /* Styles pour les popups Mapbox */
+  .mapboxgl-popup {
+    max-width: 300px;
+  }
+  
+  .popup-content {
+    padding: 0.5rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.875rem;
+  }
+  
+  .popup-content b {
+    color: #0f62fe;
+  }

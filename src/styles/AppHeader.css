@@ -1,0 +1,96 @@
+.app-header {
+    height: 48px;
+    width: 100%;
+    background-color: #161616;
+    color: #f4f4f4;
+    font-family: 'IBM Plex Sans', sans-serif;
+  }
+  
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-logo {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-right: 2rem;
+  }
+  
+  .header-logo a {
+    color: #f4f4f4;
+    text-decoration: none;
+  }
+  
+  .header-nav ul {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .header-nav-item {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 1rem;
+    color: #c6c6c6;
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  
+  .header-nav-item:hover, .header-nav-item.active {
+    color: #ffffff;
+    border-bottom-color: #0f62fe;
+  }
+  
+  .header-nav-item svg {
+    margin-right: 0.5rem;
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+  
+  .header-actions {
+    display: flex;
+  }
+  
+  .header-action {
+    background: transparent;
+    border: none;
+    color: #f4f4f4;
+    cursor: pointer;
+    height: 48px;
+    width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+  }
+  
+  .header-action:hover {
+    background-color: #353535;
+  }
+  
+  .user-profile {
+    margin-left: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    .header-nav {
+      display: none;
+    }
+  }
