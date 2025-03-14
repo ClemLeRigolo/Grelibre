@@ -1,60 +1,37 @@
-/* Full-width inputs */
-.easy-nput {
-  width: 100%;
-  padding: 12px 20px;
-  margin: 8px 0;
-  display: inline-block;
-  border: 1px solid #ccc;
-  box-sizing: border-box;
-}
-
-.checkbox-container {
+/* Styles pour le bouton de retour */
+.auth-back-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
   display: flex;
-  /* justify-content: space-evenly; */
+  align-items: center;
+  color: #525252;
+  text-decoration: none;
+  font-size: 0.875rem;
+  transition: color 0.2s;
 }
 
-.name {
-  width: 49% !important;
+.auth-back-button svg {
+  margin-right: 0.5rem;
 }
 
-.name + .name {
-  margin-left: 2% !important;
+.auth-back-button:hover {
+  color: var(--selected-color, #0f62fe);
 }
 
-.log-button {
-  background-color: var(--selected-color);
-  color: white;
-  padding: 14px 20px;
-  margin: 8px 0;
-  border: none;
-  cursor: pointer;
-  width: 100%;
-  transition: opacity 0.3s ease;
+/* Styles pour l'option "Continuer sans se connecter" */
+.auth-skip-option {
+  margin-top: 1.5rem;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1.5rem;
 }
 
-.log-button:disabled {
-  background-color: #cccccc;
-  color: #888888;
-  cursor: not-allowed;
+.auth-skip-button {
+  width: auto !important;
 }
 
-/* Add a hover effect for buttons */
-button:hover {
-  opacity: 0.8;
-}
-
-.aknowledge-button {
-  background-color: var(--selected-color);
-  color: white;
-  padding: 14px 20px;
-  margin: 8px 0;
-  border: none;
-  cursor: pointer;
-  width: 20%;
-  transition: opacity 0.3s ease;
-}
-
-.error {
-  color: red;
-  font-size: 0.75em;
+/* Rendre le conteneur auth en position relative pour le positionnement absolu du bouton de retour */
+.auth-container {
+  position: relative;
 }

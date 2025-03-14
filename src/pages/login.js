@@ -1,133 +1,170 @@
 import React from "react";
 import { Link, Redirect } from "react-router-dom";
+import {
+  TextInput,
+  Button,
+  InlineNotification,
+  Form,
+  Stack,
+  FormGroup,
+  Tile
+} from "@carbon/react";
+import { Login as LoginIcon, ArrowLeft } from "@carbon/icons-react"; // Ajout de l'icône de retour
 
 import { authStates, withAuth } from "../components/auth";
 import fr from "../utils/i18n";
 import Loader from "../components/loader";
-import { getUserData, signIn } from "../utils/firebase";
-import { validateEmailPassword } from "../utils/helpers";
+import { signIn } from "../utils/firebase";
+import { validateEmail } from "../utils/helpers";
 
 import "../styles/login.css";
-import Password from "../components/password";
 
 class Login extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      user: undefined,
-      surname: "",
-      name: "",
       email: "",
       password: "",
-      retype: "",
-      error: ""
+      error: "",
+      loading: false
     };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   handleInputChange(event) {
-    const target = event.target;
-    const value = target.value;
-    const name = target.name;
-
     this.setState({
-      [name]: value,
-      error: "",
+      [event.target.name]: event.target.value,
+      error: ""
     });
   }
 
   handleSubmit(event) {
     event.preventDefault();
+    const { email, password } = this.state;
 
-    if (this.state.error) {
+    // Validation
+    if (!email) {
+      this.setState({ error: fr.ERRORS.EMPTY_EMAIL });
       return;
     }
 
-    //Validate email & password
-    const errorMsg = validateEmailPassword(
-      this.state.email,
-      this.state.password,
-      true
-    );
+    // if (!validateEmail(email)) {
+    //   this.setState({ error: fr.ERRORS.INVALID_EMAIL });
+    //   return;
+    // }
 
-    if (errorMsg) {
-      this.setState({
-        error: errorMsg,
-      });
+    if (!password) {
+      this.setState({ error: fr.ERRORS.EMPTY_PASSWORD });
       return;
     }
 
-    signIn(this.state.email, this.state.password)
-      .then(() => {
-        getUserData(this.state.email)
-        .then((userData) => {
-          // Récupérer le nom et le prénom de l'utilisateur
-          const { firstName, lastName } = userData;
+    this.setState({ loading: true, error: "" });
 
-          this.setState({
-            firstName,
-            lastName,
-          });
-        })
-        .catch((error) => {
-          console.log("Erreur lors de la récupération des informations de l'utilisateur", error);
-        });
-      })
-      .catch(e => {
-        console.log("Error signing in", e);
+    signIn(email, password)
+      .catch(error => {
+        console.error("Erreur de connexion:", error);
         this.setState({
-          error: "Incorrect email/password",
+          error: fr.ERRORS.AUTH,
+          loading: false
         });
       });
   }
-  render() {
-    const params = new URLSearchParams(window.location.search);
-    const redirect = params.get('redirect');
 
-    if (this.props.authState === authStates.INITIAL_VALUE) {
+  render() {
+    const { authState, user } = this.props;
+    const { loading, error } = this.state;
+    const urlParams = new URLSearchParams(window.location.search);
+    const redirect = urlParams.get('redirect') || '/';
+
+    if (authState === authStates.INITIAL_VALUE) {
       return <Loader />;
     }
 
-    if (this.props.authState === authStates.LOGGED_IN) {
-      return <Redirect to={`${redirect}`}></Redirect>;
+    if (user) {
+      return <Redirect to={redirect} />;
     }
 
-    const errorMsg = this.state.error;
-
     return (
-      <div className="container">
-      <form onSubmit={this.handleSubmit}>
-        <div className="content">
-          <div className="login">
-          <h2>{fr.GREETINGS.LOGIN}</h2>
-
-          <input
-            type="text"
-            placeholder={fr.FORM_FIELDS.EMAIL}
-            name="email"
-            onChange={this.handleInputChange}
-            className="easy-nput"
-            required
-          />
-
-          <Password
-            onPasswordTextChanged={(password) => this.setState({password : password})}
-            placeholder={fr.FORM_FIELDS.PASSWORD}
-            required={true}
-            name="password"
-          />
-          {errorMsg && <p className="error">{errorMsg}</p>}
-          <button id="login-button" className="log-button" type="submit">
-            {fr.FORM_FIELDS.LOGIN}
-          </button>
-          <Link to="/reset" data-cy='reset'>{fr.FORM_FIELDS.FORGOT_PASSWORD}</Link>
-
-          <p>{fr.FORM_FIELDS.LOGIN_ALT_TEXT}</p>
-          <Link to={`/signup?redirect=${redirect}`}>Créer un compte</Link>
-          </div>
-        </div>
-      </form>
+      <div className="auth-container">
+        {/* Bouton de retour vers l'application principale */}
+        <Link to="/" className="auth-back-button">
+          <ArrowLeft size={20} /> Retour à l'application
+        </Link>
+        
+        <Tile className="auth-tile">
+          <Stack gap={7}>
+            <div className="auth-header">
+              <LoginIcon className="auth-icon" />
+              <h1 className="auth-title">{fr.GREETINGS.LOGIN}</h1>
+            </div>
+            
+            <Form onSubmit={this.handleSubmit}>
+              {error && (
+                <InlineNotification
+                  kind="error"
+                  title="Erreur"
+                  subtitle={error}
+                  hideCloseButton={false}
+                  onCloseButtonClick={() => this.setState({ error: "" })}
+                  lowContrast
+                  className="auth-notification"
+                />
+              )}
+              
+              <FormGroup legendText="">
+                <TextInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  labelText={fr.FORM_FIELDS.EMAIL}
+                  placeholder={fr.FORM_FIELDS.EMAIL}
+                  onChange={this.handleInputChange}
+                  required
+                />
+                
+                <div className="form-spacer" />
+                
+                <TextInput.PasswordInput
+                  id="password"
+                  name="password"
+                  labelText={fr.FORM_FIELDS.PASSWORD}
+                  placeholder={fr.FORM_FIELDS.PASSWORD}
+                  onChange={this.handleInputChange}
+                  required
+                />
+              </FormGroup>
+              
+              <div className="auth-forgot-password">
+                <Link to="/reset">{fr.FORM_FIELDS.FORGOT_PASSWORD}</Link>
+              </div>
+              
+              <Button
+                type="submit"
+                className="auth-submit-button"
+                disabled={loading}
+              >
+                {loading ? "Connexion en cours..." : fr.FORM_FIELDS.LOGIN}
+              </Button>
+              
+              <div className="auth-alt-option">
+                <p>{fr.FORM_FIELDS.LOGIN_ALT_TEXT}</p>
+                <Link to="/signup" className="auth-link">{fr.FORM_FIELDS.SIGNUP}</Link>
+              </div>
+              
+              <div className="auth-skip-option">
+                <Button 
+                  kind="ghost" 
+                  as={Link} 
+                  to="/"
+                  className="auth-skip-button"
+                >
+                  Continuer sans se connecter
+                </Button>
+              </div>
+            </Form>
+          </Stack>
+        </Tile>
       </div>
     );
   }

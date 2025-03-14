@@ -1,4 +1,4 @@
-import React from "react";
+import "./carbon.scss";  // Fichier que nous allons créer
 import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";

@@ -11,7 +11,7 @@ export const fr = {
   FORM_FIELDS: {
     SURNAME: "Nom",
     NAME: "Prénom",
-    EMAIL: "E-mail @grenoble-inp.org ou @grenoble-inp.fr",
+    EMAIL: "E-mail",
     PASSWORD: "Mot de passe",
     RETYPE_PASSWORD: "Confirmer le mot de passe",
     SIGNUP: "S'inscrire",

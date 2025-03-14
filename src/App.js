@@ -40,21 +40,34 @@ function App(props) {
     setIsMenuOpen(prevState => !prevState);
   }
 
+  // Liste des chemins où le header ne devrait pas être affiché
+  const noHeaderPaths = ['/login', '/signup', '/reset', '/verify', '/terms'];
+
+  // Fonction pour déterminer si le header doit être affiché
+  const shouldShowHeader = (path) => {
+    return !noHeaderPaths.some(noHeaderPath => path.startsWith(noHeaderPath));
+  };
+
   return (
     <Router>
       <div className="app-container">
-        <AppHeader />
-        <Switch>
-          <Route path="/login" component={Login} />
-          <Route path="/signup" component={Signup} />
-          <Route path="/reset" component={Reset} />
-          <Route path="/verify" render={(props) => 
-            <Verify {...props} />}
-          />
-          <Route path="/terms" component={Terms} />
-          <Route path="/profile" component={Profile} />
-          <Route path="/" component={Home} />
-        </Switch>
+        <Route
+          path="/"
+          render={({ location }) => shouldShowHeader(location.pathname) && <AppHeader />}
+        />
+        <div className={shouldShowHeader(window.location.pathname) ? "main-content" : ""}>
+          <Switch>
+            <Route path="/login" component={Login} />
+            <Route path="/signup" component={Signup} />
+            <Route path="/reset" component={Reset} />
+            <Route path="/verify" render={(props) => 
+              <Verify {...props} />}
+            />
+            <Route path="/terms" component={Terms} />
+            <Route path="/profile" component={Profile} />
+            <Route path="/" component={Home} />
+          </Switch>
+        </div>
       </div>
     </Router>
   );

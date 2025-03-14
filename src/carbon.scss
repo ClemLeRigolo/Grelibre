@@ -1,0 +1,99 @@
+// Import Carbon styles
+@use '@carbon/react';
+// Si tu préfères importer des composants spécifiques pour réduire la taille du bundle:
+/*
+@use '@carbon/styles/scss/config';
+@use '@carbon/styles/scss/components/button';
+@use '@carbon/styles/scss/components/form';
+@use '@carbon/styles/scss/components/notification';
+@use '@carbon/styles/scss/components/text-input';
+@use '@carbon/styles/scss/components/tiles';
+*/
+
+// Variables personnalisées
+:root {
+  --selected-color: #0f62fe;
+}
+
+// Styles supplémentaires personnalisés
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f4f4f4;
+}
+
+.auth-tile {
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem !important;
+  background-color: #ffffff;
+  border-top: 3px solid var(--selected-color);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-icon {
+  color: var(--selected-color);
+  margin-right: 1rem;
+}
+
+.auth-title {
+  font-size: 1.75rem;
+  font-weight: 400;
+  margin: 0;
+}
+
+.form-spacer {
+  height: 1.5rem;
+}
+
+.auth-notification {
+  margin-bottom: 1.5rem;
+}
+
+.auth-forgot-password {
+  display: flex;
+  justify-content: flex-end;
+  margin: 1rem 0;
+}
+
+.auth-forgot-password a {
+  color: var(--selected-color);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
+.auth-submit-button {
+  width: 100%;
+  margin: 1.5rem 0;
+}
+
+.auth-alt-option {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.auth-alt-option p {
+  margin: 0 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: #525252;
+}
+
+.auth-link {
+  color: var(--selected-color);
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  text-decoration: underline;
+}
