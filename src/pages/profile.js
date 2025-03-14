@@ -3,7 +3,7 @@ import { UserAvatarFilledAlt } from "@carbon/icons-react";
 import { Button, Tile, TextInput } from "@carbon/react";
 import { Link } from "react-router-dom";
 import { authStates, withAuth } from "../components/auth";
-import { signOut, getUserData, updateUserData } from "../utils/firebase";
+import { signOut, getUserData, updateUserData, getUserDataById } from "../utils/firebase";
 import Loader from "../components/loader";
 import "../styles/profile.css";
 
@@ -20,6 +20,9 @@ class Profile extends React.Component {
       user: undefined,
       isEditing: false, // Mode édition
       updatedUser: {},
+        viewingOtherUser: false,
+        id: "",
+        hasToReload: false
     };
   }
 
@@ -55,6 +58,13 @@ class Profile extends React.Component {
   };
 
   render() {
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get("id");
+    if ((userId && userId !== this.state.id) || (!userId && this.state.viewingOtherUser)) {
+        this.setState({ id: userId, hasToReload: true, viewingOtherUser: false });
+    }
+
+
     if (this.props.authState === authStates.INITIAL_VALUE) {
       return <Loader />;
     }
@@ -69,10 +79,18 @@ class Profile extends React.Component {
       );
     }
 
-    if (this.props.authState === authStates.LOGGED_IN && !this.state.user) {
-        getUserData(this.props.user?.email).then((user) => {
-            this.setState({ user });
+    if ((this.props.authState === authStates.LOGGED_IN && !this.state.user) || this.state.hasToReload) {
+        if (userId) {
+        // Si on affiche un autre utilisateur
+        getUserDataById(userId).then((user) => {
+            this.setState({ user, viewingOtherUser: true, hasToReload: false });
         });
+        } else if (this.props.authState === authStates.LOGGED_IN) {
+        // Sinon, on affiche le profil de l'utilisateur connecté
+        getUserData(this.props.user?.email).then((user) => {
+            this.setState({ user, updatedUser: { ...user }, hasToReload: false });
+        });
+        }
       return <Loader />;
     }
 
@@ -81,8 +99,13 @@ class Profile extends React.Component {
         <Tile className="profile-card">
           <UserAvatarFilledAlt size={48} />
           
-          {/* Mode Édition ON / OFF */}
-          {this.state.isEditing ? (
+          {this.state.viewingOtherUser ? (
+            <>
+              <h1>{this.state.user.tag}</h1>
+              <h2>{this.state.user.name} {this.state.user.surname}</h2>
+              <p>{this.state.user.email}</p>
+            </>
+          ) : this.state.isEditing ? (
             <>
               <TextInput
                 id="tag"
@@ -116,7 +139,9 @@ class Profile extends React.Component {
             </>
           )}
 
-          <Button onClick={handleSignOut}>Se déconnecter</Button>
+          {!this.state.viewingOtherUser && (
+            <Button kind="danger" onClick={handleSignOut}>Se déconnecter</Button>
+          )}
         </Tile>
       </div>
     );
