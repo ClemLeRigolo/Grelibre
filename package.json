@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@carbon/icons-react": "^11.57.0",
+    "@carbon/react": "^1.78.0",
     "axios": "^1.8.3",
     "carbon-components": "^10.58.15",
     "carbon-components-react": "^8.67.0",
