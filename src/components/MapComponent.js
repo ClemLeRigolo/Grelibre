@@ -46,6 +46,23 @@ const MapComponent = () => {
     const [searchMode, setSearchMode] = useState('search'); // 'search' ou 'route'
     const [selectedDestination, setSelectedDestination] = useState(null);
 
+    // Ajouter cet état pour stocker les couleurs des lignes
+    const [routeColors, setRouteColors] = useState({});
+
+    // Ajoutons de nouveaux états pour gérer les filtres de transport
+    const [transportFilters, setTransportFilters] = useState({
+        showTrams: true,        // route_type 0
+        showBuses: true,        // route_type 3
+        expandedFilters: false, // pour afficher/masquer les filtres détaillés
+        selectedLines: {}       // pour stocker les lignes individuelles sélectionnées
+    });
+
+    // État pour stocker les lignes de transport par type
+    const [transportLinesByType, setTransportLinesByType] = useState({
+        trams: [],  // Lignes de tram
+        buses: []   // Lignes de bus
+    });
+
     // Remplacer les deux useEffect séparés par un seul qui gère à la fois la carte et la position
     useEffect(() => {
         // Fonction pour obtenir la position de l'utilisateur
@@ -79,6 +96,10 @@ const MapComponent = () => {
             // Obtenir la position d'abord
             const position = await getUserPosition();
             
+            // Charger les couleurs des lignes avant d'initialiser la carte
+            const colors = await loadRouteColorsAsync();
+            setRouteColors(colors);
+            
             // Ensuite initialiser la carte
             if (!mapInstance.current && mapContainerRef.current) {
                 setMapLoading(true);
@@ -111,7 +132,19 @@ const MapComponent = () => {
                         source: 'transports',
                         filter: ['==', ['geometry-type'], 'LineString'],
                         paint: {
-                            'line-color': '#3366FF',
+                            'line-color': [
+                                'case',
+                                // Essayer d'abord avec route_short_name
+                                ['has', ['get', 'route_short_name'], ['literal', routeColors]],
+                                ['get', ['get', 'route_short_name'], ['literal', routeColors]],
+                                // Puis avec route_id si disponible
+                                ['has', ['get', 'route_id'], ['literal', routeColors]],
+                                ['get', ['get', 'route_id'], ['literal', routeColors]],
+                                // Couleurs spécifiques pour les types de transport
+                                ['==', ['get', 'route_type'], '0'], '#DE9917', // Tram
+                                ['==', ['get', 'route_type'], '3'], '#1E71B8', // Bus
+                                '#3366FF' // Couleur par défaut
+                            ],
                             'line-width': 3,
                             'line-opacity': 0.8
                         }
@@ -262,6 +295,8 @@ const MapComponent = () => {
         };
 
         initMapAndPosition();
+
+        loadRouteColors();
 
         return () => {
             if (mapInstance.current) {
@@ -844,6 +879,255 @@ const centerOnUserPosition = () => {
     }
 };
 
+    // Ajouter cette fonction pour charger les couleurs des lignes
+    const loadRouteColors = async () => {
+        try {
+            const response = await fetch('/data/txt/routes.txt');
+            const text = await response.text();
+            
+            // Analyser le fichier CSV
+            const lines = text.split('\n');
+            const header = lines[0].split(',');
+            
+            // Trouver les index des colonnes qui nous intéressent
+            const routeIdIndex = header.indexOf('route_id');
+            const routeShortNameIndex = header.indexOf('route_short_name');
+            const routeColorIndex = header.indexOf('route_color');
+            
+            if (routeIdIndex === -1 || routeColorIndex === -1 || routeShortNameIndex === -1) {
+                console.error("Format du fichier routes.txt incorrect");
+                return;
+            }
+            
+            // Créer un objet avec les couleurs des lignes
+            const colors = {};
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const columns = lines[i].split(',');
+                if (columns.length <= Math.max(routeIdIndex, routeColorIndex, routeShortNameIndex)) continue;
+                
+                const routeId = columns[routeIdIndex];
+                const routeShortName = columns[routeShortNameIndex];
+                const routeColor = columns[routeColorIndex];
+                
+                // Stocker par ID et par nom court (pour plus de flexibilité)
+                colors[routeId] = `#${routeColor}`;
+                colors[routeShortName] = `#${routeColor}`;
+            }
+            
+            console.log("Couleurs des lignes chargées:", colors);
+            setRouteColors(colors);
+            
+            // Mettre à jour les couleurs sur la carte si elle est déjà chargée
+            if (mapInstance.current && mapInstance.current.getLayer('transport-lines')) {
+                updateTransportColors(colors);
+            }
+            
+        } catch (error) {
+            console.error("Erreur lors du chargement des couleurs des lignes:", error);
+        }
+    };
+
+    // Remplacer la fonction updateTransportColors par cette version améliorée:
+
+const updateTransportColors = (colors) => {
+    if (!mapInstance.current) return;
+    
+    try {
+        // Vérifier si la carte est chargée et si le style est chargé
+        if (!mapInstance.current.isStyleLoaded()) {
+            console.log("Style de la carte pas encore chargé, nouvel essai dans 100ms");
+            setTimeout(() => updateTransportColors(colors), 100);
+            return;
+        }
+        
+        // Vérifier si la couche existe
+        if (!mapInstance.current.getLayer('transport-lines')) {
+            console.log("Couche 'transport-lines' non trouvée, nouvel essai dans 100ms");
+            setTimeout(() => updateTransportColors(colors), 100);
+            return;
+        }
+        
+        console.log("Application des couleurs aux lignes de transport:", colors);
+        
+        // Mettre à jour la couleur des lignes de transport avec une expression plus robuste
+        mapInstance.current.setPaintProperty('transport-lines', 'line-color', [
+            'case',
+            // Essayer d'abord avec route_short_name
+            ['has', ['get', 'route_short_name'], ['literal', colors]],
+            ['get', ['get', 'route_short_name'], ['literal', colors]],
+            // Puis avec route_id si disponible
+            ['has', ['get', 'route_id'], ['literal', colors]],
+            ['get', ['get', 'route_id'], ['literal', colors]],
+            // Couleurs spécifiques pour les types de transport
+            ['==', ['get', 'route_type'], '0'], '#DE9917', // Tram
+            ['==', ['get', 'route_type'], '3'], '#1E71B8', // Bus
+            '#3366FF' // Couleur par défaut
+        ]);
+        
+        console.log("Couleurs appliquées avec succès");
+    } catch (error) {
+        console.error("Erreur lors de l'application des couleurs:", error);
+    }
+};
+
+// Ajouter cet useEffect pour s'assurer que les couleurs sont appliquées après le chargement de la carte
+useEffect(() => {
+    if (Object.keys(routeColors).length > 0) {
+        // Essayer d'appliquer les couleurs immédiatement
+        updateTransportColors(routeColors);
+        
+        // Et aussi avec un délai pour s'assurer que la carte est prête
+        const timeoutId = setTimeout(() => {
+            updateTransportColors(routeColors);
+        }, 1000);
+        
+        return () => clearTimeout(timeoutId);
+    }
+}, [routeColors]);
+
+    // Fonction pour charger les lignes de transport et les organiser par type
+    const loadTransportLines = async () => {
+        try {
+            const response = await fetch('/data/txt/routes.txt');
+            const text = await response.text();
+            
+            // Analyser le fichier CSV
+            const lines = text.split('\n');
+            const header = lines[0].split(',');
+            
+            // Trouver les index des colonnes qui nous intéressent
+            const routeIdIndex = header.indexOf('route_id');
+            const routeShortNameIndex = header.indexOf('route_short_name');
+            const routeTypeIndex = header.indexOf('route_type');
+            const routeColorIndex = header.indexOf('route_color');
+            
+            const trams = [];
+            const buses = [];
+            
+            // Initialiser tous les filtres à true par défaut
+            const initialSelectedLines = {};
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const columns = lines[i].split(',');
+                if (columns.length <= Math.max(routeIdIndex, routeTypeIndex, routeShortNameIndex)) continue;
+                
+                const routeId = columns[routeIdIndex];
+                const routeShortName = columns[routeShortNameIndex];
+                const routeType = columns[routeTypeIndex];
+                const routeColor = columns[routeColorIndex];
+                
+                const lineInfo = {
+                    id: routeId,
+                    shortName: routeShortName,
+                    type: routeType,
+                    color: `#${routeColor}`
+                };
+                
+                // Organiser par type
+                if (routeType === '0') {
+                    trams.push(lineInfo);
+                } else if (routeType === '3') {
+                    buses.push(lineInfo);
+                }
+                
+                // Initialiser le filtre de cette ligne à true
+                initialSelectedLines[routeId] = true;
+            }
+            
+            // Trier les lignes par nom court
+            trams.sort((a, b) => a.shortName.localeCompare(b.shortName));
+            buses.sort((a, b) => a.shortName.localeCompare(b.shortName));
+            
+            setTransportLinesByType({ trams, buses });
+            setTransportFilters(prev => ({
+                ...prev,
+                selectedLines: initialSelectedLines
+            }));
+            
+            console.log("Lignes de transport chargées:", { trams, buses });
+            
+        } catch (error) {
+            console.error("Erreur lors du chargement des lignes de transport:", error);
+        }
+    };
+
+    // Appeler cette fonction au chargement du composant
+    useEffect(() => {
+        loadTransportLines();
+    }, []);
+
+    // Fonction pour mettre à jour les filtres
+    const updateTransportFilter = (filterType, value) => {
+        setTransportFilters(prev => {
+            const newFilters = { ...prev };
+            
+            if (filterType === 'showTrams' || filterType === 'showBuses') {
+                // Mettre à jour le filtre principal
+                newFilters[filterType] = value;
+                
+                // Mettre à jour tous les filtres de lignes individuelles de ce type
+                const lineType = filterType === 'showTrams' ? 'trams' : 'buses';
+                transportLinesByType[lineType].forEach(line => {
+                    newFilters.selectedLines[line.id] = value;
+                });
+            } else if (filterType === 'expandedFilters') {
+                // Basculer l'état d'expansion
+                newFilters.expandedFilters = value;
+            } else {
+                // Mettre à jour un filtre de ligne individuel
+                newFilters.selectedLines[filterType] = value;
+                
+                // Vérifier si toutes les lignes d'un type sont sélectionnées/désélectionnées
+                const allTramSelected = transportLinesByType.trams.every(line => newFilters.selectedLines[line.id]);
+                const allBusSelected = transportLinesByType.buses.every(line => newFilters.selectedLines[line.id]);
+                
+                newFilters.showTrams = allTramSelected;
+                newFilters.showBuses = allBusSelected;
+            }
+            
+            return newFilters;
+        });
+    };
+
+    // Effet pour appliquer les filtres à la carte
+    useEffect(() => {
+        if (!mapInstance.current) return;
+        
+        // Créer un filtre pour MapBox basé sur nos sélections
+        const selectedLineIds = Object.entries(transportFilters.selectedLines)
+            .filter(([_, selected]) => selected)
+            .map(([id]) => id);
+        
+        // Filtre pour les lignes de transport
+        const lineFilter = [
+            'all',
+            ['==', ['geometry-type'], 'LineString'],
+            ['in', ['get', 'route_id'], ['literal', selectedLineIds]]
+        ];
+        
+        // Filtre pour les arrêts de transport
+        const stopFilter = [
+            'all',
+            ['==', ['geometry-type'], 'Point'],
+            ['in', ['get', 'route_id'], ['literal', selectedLineIds]]
+        ];
+        
+        // Appliquer les filtres aux couches
+        if (mapInstance.current.getLayer('transport-lines')) {
+            mapInstance.current.setFilter('transport-lines', lineFilter);
+        }
+        
+        if (mapInstance.current.getLayer('transport-stops')) {
+            mapInstance.current.setFilter('transport-stops', stopFilter);
+        }
+        
+    }, [transportFilters]);
+
     return (
         <div className="map-container">
             {mapLoading && (
@@ -877,11 +1161,14 @@ const centerOnUserPosition = () => {
                             disabled={locationLoading}
                             className="location-button"
                         />
-                        <TransportToggle 
-                            showTransport={showTransport} 
-                            toggleTransport={handleToggleTransport} 
-                        />
                     </div>
+                    
+                    {/* Filtres de transport */}
+                    <TransportFilters
+                        filters={transportFilters}
+                        updateFilter={updateTransportFilter}
+                        transportLinesByType={transportLinesByType}
+                    />
                     
                     {searchResults.length > 0 && (
                         <div className="search-results">
@@ -1001,4 +1288,139 @@ const centerOnUserPosition = () => {
     );
 };
 
+// Composant pour le filtre de transport
+const TransportFilters = ({ filters, updateFilter, transportLinesByType }) => {
+    return (
+        <div className="transport-filters-container">
+            <Button
+                kind="ghost"
+                onClick={() => updateFilter('expandedFilters', !filters.expandedFilters)}
+                className="filter-toggle-button"
+            >
+                {filters.expandedFilters ? 'Masquer les filtres' : 'Filtrer les transports'}
+            </Button>
+            
+            {filters.expandedFilters && (
+                <div className="filters-panel">
+                    <div className="filter-category">
+                        <div className="filter-group">
+                            <Toggle
+                                id="tram-filter"
+                                labelText="Tramways"
+                                toggled={filters.showTrams}
+                                onToggle={() => updateFilter('showTrams', !filters.showTrams)}
+                            />
+                        </div>
+                        
+                        {transportLinesByType.trams.length > 0 && (
+                            <div className="filter-lines">
+                                {transportLinesByType.trams.map(line => (
+                                    <div key={line.id} className="line-filter">
+                                        <input
+                                            type="checkbox"
+                                            id={`line-${line.id}`}
+                                            checked={filters.selectedLines[line.id] || false}
+                                            onChange={(e) => updateFilter(line.id, e.target.checked)}
+                                        />
+                                        <label 
+                                            htmlFor={`line-${line.id}`}
+                                            style={{
+                                                backgroundColor: line.color,
+                                                color: '#FFFFFF'
+                                            }}
+                                        >
+                                            {line.shortName}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    <div className="filter-category">
+                        <div className="filter-group">
+                            <Toggle
+                                id="bus-filter"
+                                labelText="Bus"
+                                toggled={filters.showBuses}
+                                onToggle={() => updateFilter('showBuses', !filters.showBuses)}
+                            />
+                        </div>
+                        
+                        {transportLinesByType.buses.length > 0 && (
+                            <div className="filter-lines">
+                                {transportLinesByType.buses.map(line => (
+                                    <div key={line.id} className="line-filter">
+                                        <input
+                                            type="checkbox"
+                                            id={`line-${line.id}`}
+                                            checked={filters.selectedLines[line.id] || false}
+                                            onChange={(e) => updateFilter(line.id, e.target.checked)}
+                                        />
+                                        <label 
+                                            htmlFor={`line-${line.id}`}
+                                            style={{
+                                                backgroundColor: line.color,
+                                                color: '#FFFFFF'
+                                            }}
+                                        >
+                                            {line.shortName}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 export default MapComponent;
+
+// Et ajouter cette nouvelle fonction pour charger les couleurs de manière asynchrone:
+const loadRouteColorsAsync = async () => {
+    try {
+        const response = await fetch('/data/txt/routes.txt');
+        const text = await response.text();
+        
+        // Analyser le fichier CSV
+        const lines = text.split('\n');
+        const header = lines[0].split(',');
+        
+        // Trouver les index des colonnes qui nous intéressent
+        const routeIdIndex = header.indexOf('route_id');
+        const routeShortNameIndex = header.indexOf('route_short_name');
+        const routeColorIndex = header.indexOf('route_color');
+        
+        if (routeIdIndex === -1 || routeColorIndex === -1 || routeShortNameIndex === -1) {
+            console.error("Format du fichier routes.txt incorrect");
+            return {};
+        }
+        
+        // Créer un objet avec les couleurs des lignes
+        const colors = {};
+        
+        for (let i = 1; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            
+            const columns = lines[i].split(',');
+            if (columns.length <= Math.max(routeIdIndex, routeColorIndex, routeShortNameIndex)) continue;
+            
+            const routeId = columns[routeIdIndex];
+            const routeShortName = columns[routeShortNameIndex];
+            const routeColor = columns[routeColorIndex];
+            
+            // Stocker par ID et par nom court (pour plus de flexibilité)
+            colors[routeId] = `#${routeColor}`;
+            colors[routeShortName] = `#${routeColor}`;
+        }
+        
+        console.log("Couleurs des lignes chargées de manière asynchrone:", colors);
+        return colors;
+    } catch (error) {
+        console.error("Erreur lors du chargement asynchrone des couleurs:", error);
+        return {};
+    }
+};
