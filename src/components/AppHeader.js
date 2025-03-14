@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   ChoroplethMap, 
   Search,
@@ -10,6 +10,21 @@ import {
 import '../styles/AppHeader.css';
 
 const AppHeader = () => {
+  // Utiliser useLocation pour obtenir l'URL actuelle
+  const location = useLocation();
+  const currentPath = location.pathname;
+
+  // Fonction pour déterminer si un lien est actif
+  const isActive = (path) => {
+    if (path === '/' && currentPath === '/') {
+      return true;
+    }
+    if (path !== '/' && currentPath.startsWith(path)) {
+      return true;
+    }
+    return false;
+  };
+
   return (
     <header className="app-header">
       <div className="header-container">
@@ -20,17 +35,17 @@ const AppHeader = () => {
           <nav className="header-nav">
             <ul>
               <li>
-                <Link to="/" className="header-nav-item active">
+                <Link to="/" className={`header-nav-item ${isActive('/') ? 'active' : ''}`}>
                   <ChoroplethMap /> Carte
                 </Link>
               </li>
               <li>
-                <Link to="/localisations" className="header-nav-item">
+                <Link to="/localisations" className={`header-nav-item ${isActive('/localisations') ? 'active' : ''}`}>
                   Mes localisations
                 </Link>
               </li>
               <li>
-                <Link to="/sorties" className="header-nav-item">
+                <Link to="/sorties" className={`header-nav-item ${isActive('/sorties') ? 'active' : ''}`}>
                   Sortie
                 </Link>
               </li>
