@@ -308,7 +308,7 @@ function Locations(props) {
               labelText="Nom du lieu"
               placeholder="Ex: Mon domicile"
               value={newLocationName}
-              onChange={(e) => searchAddressWithDebounce(e.target.value)}
+              onChange={(e) => setNewLocationName(e.target.value)}
             />
             <Button onClick={addLocation}>Ajouter aux favoris</Button>
           </div>
