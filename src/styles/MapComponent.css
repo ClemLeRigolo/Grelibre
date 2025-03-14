@@ -100,6 +100,18 @@ input:checked + .slider:before {
     border-radius: 4px;
 }
 
+/* Style pour les popups */
+.mapboxgl-popup-content {
+    padding: 12px;
+    max-width: 300px;
+}
+
+.popup-content {
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 12px;
+}
+
 /* Styles pour s'assurer que la carte prend toute la hauteur disponible */
 @media (max-width: 768px) {
     .map-container {
