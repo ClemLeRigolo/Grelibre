@@ -122,7 +122,7 @@ export async function getUserDataById(uid) {
   return snapshot.val();
 }
 
-export async function updateUserData(surname, name, tag) {
+export async function updateUserData(surname, name, tag, favoriteLocations) {
   const user = firebase.auth().currentUser;
   const database = firebase.database();
   const userRef = database.ref('users/' + user.uid);
@@ -136,5 +136,7 @@ export async function updateUserData(surname, name, tag) {
   userTemp.name = name;
   if (tag !== undefined)
   userTemp.tag = tag;
+  if (favoriteLocations !== undefined)
+  userTemp.favoriteLocations = favoriteLocations.favoriteLocations;
   userRef.set(userTemp);
 }

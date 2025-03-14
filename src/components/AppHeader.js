@@ -25,13 +25,13 @@ const AppHeader = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/transports" className="header-nav-item">
-                  Transports
+                <Link to="/localisations" className="header-nav-item">
+                  Mes localisations
                 </Link>
               </li>
               <li>
-                <Link to="/itineraires" className="header-nav-item">
-                  Itinéraires
+                <Link to="/sorties" className="header-nav-item">
+                  Sortie
                 </Link>
               </li>
             </ul>

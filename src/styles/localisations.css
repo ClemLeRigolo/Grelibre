@@ -1,0 +1,95 @@
+/* styles/Locations.css */
+.locations-container {
+  display: flex;
+  height: calc(100vh - 48px); /* Ajustez en fonction de votre en-tête */
+  width: 100%;
+}
+
+.locations-sidebar {
+  width: 350px;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f4f4f4;
+  border-right: 1px solid #ddd;
+}
+
+.locations-map {
+  flex: 1;
+  height: 100%;
+}
+
+.location-item {
+  margin-bottom: 15px;
+  border-left: 3px solid #0f62fe;
+}
+
+.location-item h3 {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.location-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.new-location-form {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.new-location-form h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.locations-unauthorized {
+  max-width: 600px;
+  margin: 40px auto;
+  text-align: center;
+  padding: 20px;
+}
+
+.locations-button {
+  margin-top: 15px;
+}
+
+/* Style pour la popup Mapbox */
+.mapboxgl-popup-content {
+  padding: 12px;
+}
+
+.mapboxgl-popup-content h3 {
+  margin-top: 0;
+  margin-bottom: 5px;
+}
+
+.address-search-form {
+    margin-bottom: 1.5rem;
+  }
+  
+  .search-results {
+    margin-top: 1rem;
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+  }
+  
+  .search-result-item {
+    padding: 0.5rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .search-result-item:hover {
+    background-color: #f4f4f4;
+  }
+  
+  .search-result-item p {
+    margin: 0;
+  }
