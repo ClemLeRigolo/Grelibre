@@ -50,6 +50,11 @@ body {
   margin: auto;
 }
 
+a {
+  color: white;
+  text-decoration: none;
+}
+
 @media only screen and (min-width: 768px) {
   .content {
     width: 33%;

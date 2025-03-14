@@ -95,56 +95,56 @@ class Profile extends React.Component {
     }
 
     return (
-      <div className="profile-container">
-        <Tile className="profile-card">
-          <UserAvatarFilledAlt size={48} />
-          
-          {this.state.viewingOtherUser ? (
-            <>
-              <h1>{this.state.user.tag}</h1>
-              <h2>{this.state.user.name} {this.state.user.surname}</h2>
-              <p>{this.state.user.email}</p>
-            </>
-          ) : this.state.isEditing ? (
-            <>
-              <TextInput
-                id="tag"
-                labelText="Tag"
-                name="tag"
-                value={this.state.updatedUser.tag}
-                onChange={this.handleInputChange}
-              />
-              <TextInput
-                id="name"
-                labelText="Prénom"
-                name="name"
-                value={this.state.updatedUser.name}
-                onChange={this.handleInputChange}
-              />
-              <TextInput
-                id="surname"
-                labelText="Nom"
-                name="surname"
-                value={this.state.updatedUser.surname}
-                onChange={this.handleInputChange}
-              />
-              <Button kind="primary" onClick={this.handleSave}>Enregistrer</Button>
-            </>
-          ) : (
-            <>
-              <h1>{this.state.user.tag}</h1>
-              <h2>{this.state.user.name} {this.state.user.surname}</h2>
-              <p>{this.props.user?.email}</p>
-              <Button kind="secondary" onClick={this.handleEditToggle}>Modifier</Button>
-            </>
-          )}
-
-          {!this.state.viewingOtherUser && (
-            <Button kind="danger" onClick={handleSignOut}>Se déconnecter</Button>
-          )}
-        </Tile>
-      </div>
-    );
+        <div className="profile-container">
+          <Tile className="profile-card">
+            <div className="profile-header">
+              <UserAvatarFilledAlt size={64} />
+              <div>
+                <h1>{this.state.user.tag}</h1>
+                <h2>{this.state.user.name} {this.state.user.surname}</h2>
+                <p className="profile-email">{this.state.user.email}</p>
+              </div>
+            </div>
+  
+            {this.state.viewingOtherUser ? (
+              <p className="profile-viewing">Vous consultez le profil d’un autre utilisateur.</p>
+            ) : this.state.isEditing ? (
+              <div className="profile-edit">
+                <TextInput
+                  id="tag"
+                  labelText="Tag"
+                  name="tag"
+                  value={this.state.updatedUser.tag}
+                  onChange={this.handleInputChange}
+                />
+                <TextInput
+                  id="name"
+                  labelText="Prénom"
+                  name="name"
+                  value={this.state.updatedUser.name}
+                  onChange={this.handleInputChange}
+                />
+                <TextInput
+                  id="surname"
+                  labelText="Nom"
+                  name="surname"
+                  value={this.state.updatedUser.surname}
+                  onChange={this.handleInputChange}
+                />
+                <div className="profile-buttons">
+                  <Button kind="primary" onClick={this.handleSave}>Enregistrer</Button>
+                  <Button kind="secondary" onClick={this.handleEditToggle}>Annuler</Button>
+                </div>
+              </div>
+            ) : (
+              <div className="profile-actions">
+                <Button kind="tertiary" onClick={this.handleEditToggle}>Modifier mon profil</Button>
+                <Button kind="danger" onClick={handleSignOut}>Se déconnecter</Button>
+              </div>
+            )}
+          </Tile>
+        </div>
+      );
   }
 }
 
