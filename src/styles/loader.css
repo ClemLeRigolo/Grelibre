@@ -1,12 +1,3 @@
-.carbon-loader-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100%;
-  background-color: #f4f4f4;
-}
-
 /* Pour les cas où le loader est utilisé dans un conteneur plus petit */
 .loader-inline {
   display: inline-flex;

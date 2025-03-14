@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import '../styles/MapComponent.css';
-import axios from 'axios'; // Assure-toi d'installer axios: npm install axios
+import axios from 'axios';
+import Loader from '../components/loader';
+
 
 // Token d'accès Mapbox
 mapboxgl.accessToken = 'pk.eyJ1IjoiYmVyZ2VvbmgiLCJhIjoiY204OG0zdWJhMGx4MzJtczVjYWZkZTN0NiJ9.zL-NC_caiJbgVsp9DV-yiA';
@@ -25,14 +27,21 @@ const MapComponent = () => {
     const markersRef = useRef([]);
     const routeSourceRef = useRef(null);
 
+    // état pour gérer le chargement
+    const [mapLoading, setMapLoading] = useState(true);
+    const [routeLoading, setRouteLoading] = useState(false);
+
     // Initialisation de la carte
     useEffect(() => {
         if (!mapInstance.current && mapContainerRef.current) {
+            setMapLoading(true); // Commencer le chargement
+            
             mapInstance.current = new mapboxgl.Map({
                 container: mapContainerRef.current,
                 style: 'mapbox://styles/mapbox/streets-v12',
                 center: GRENOBLE_CENTER,
-                zoom: 13
+                zoom: 13,
+                maxBounds: getBoundsAround(GRENOBLE_CENTER, 15) // Limiter à 15km autour de Grenoble
             });
 
             const map = mapInstance.current;
@@ -40,8 +49,15 @@ const MapComponent = () => {
             // Ajouter les contrôles de navigation
             map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
+            // Événement quand la carte commence à charger
+            map.on('styledata', () => {
+                console.log('Style de la carte en cours de chargement...');
+            });
+
             // Chargement des données quand la carte est prête
             map.on('load', () => {
+                console.log('Carte chargée, chargement des données...');
+
                 // Chargement des lignes de transport
                 fetchTransportLines();
 
@@ -154,6 +170,17 @@ const MapComponent = () => {
                         'line-opacity': 0.8
                     }
                 });
+
+                map.once('idle', () => {
+                    console.log('Carte et données entièrement chargées');
+                    setMapLoading(false);
+                });
+            });
+
+            // En cas d'erreur
+            map.on('error', (e) => {
+                console.error('Erreur de chargement de la carte:', e);
+                setMapLoading(false); // Arrêter le loader même en cas d'erreur
             });
         }
 
@@ -164,6 +191,17 @@ const MapComponent = () => {
             }
         };
     }, []);
+
+    // Fonction pour limiter la carte à 15km autour de Grenoble
+    const getBoundsAround = (center, radiusInKm) => {
+        // Convertir le rayon en degrés approximatifs (1 degré ≈ 111km)
+        const radiusInDegrees = radiusInKm / 111;
+        
+        return new mapboxgl.LngLatBounds(
+            [center[0] - radiusInDegrees, center[1] - radiusInDegrees],
+            [center[0] + radiusInDegrees, center[1] + radiusInDegrees]
+        );
+    };
 
     // Charger les lignes de transport disponibles
     const fetchTransportLines = async () => {
@@ -223,7 +261,7 @@ const MapComponent = () => {
             setRouteInfo('Veuillez saisir un point de départ et d\'arrivée');
             return;
         }
-        
+        setRouteLoading(true);
         setRouteInfo('Recherche en cours...');
         
         try {
@@ -355,6 +393,8 @@ const MapComponent = () => {
             mapInstance.current.fitBounds(bounds, {
                 padding: 50
             });
+
+            setRouteLoading(false);
             
             // Afficher les informations de l'itinéraire
             const duration = Math.round(itinerary.duration / 60); // minutes
@@ -428,6 +468,7 @@ const MapComponent = () => {
         } catch (error) {
             console.error('Erreur lors de la recherche d\'itinéraire:', error);
             setRouteInfo(`Erreur: ${error.message}<br>Vérifiez que les adresses sont correctes.`);
+            setRouteLoading(false);
         }
     };
 
@@ -485,6 +526,11 @@ const MapComponent = () => {
 
     return (
         <div className="map-container">
+                        {mapLoading && (
+                <div className="map-loader-overlay">
+                    <Loader description="Chargement de la carte..." />
+                </div>
+            )}
             <div className="map" ref={mapContainerRef}></div>
             <div className="sidebar carbon-styled">
                 <h1>Carte de Grenoble</h1>
@@ -527,12 +573,23 @@ const MapComponent = () => {
                                 <option value="TRANSIT,BICYCLE">Transport + Vélo</option>
                             </select>
                         </div>
-                        
-                        <button onClick={calculateRoute}>Rechercher</button>
-                        <div 
-                            className="route-info"
-                            dangerouslySetInnerHTML={{ __html: routeInfo }}
-                        ></div>
+                        <button 
+                            onClick={calculateRoute}
+                            disabled={routeLoading || mapLoading}
+                        >
+                            {routeLoading ? 'Recherche...' : 'Rechercher'}
+                        </button>
+
+                        {routeLoading ? (
+                            <div className="route-loader">
+                                <Loader description="Calcul de l'itinéraire..." />
+                            </div>
+                        ) : (
+                            <div 
+                                className="route-info"
+                                dangerouslySetInnerHTML={{ __html: routeInfo }}
+                            ></div>
+                        )}
                     </div>
                 </div>
             </div>
