@@ -4,7 +4,9 @@ import {
   ChoroplethMap, 
   Search,
   Notification,
-  UserAvatar
+  UserAvatar, 
+  WatsonHealthImageAvailabilityLocal as Localisations,
+  Event as Sorties
 } from '@carbon/icons-react';
 
 import '../styles/AppHeader.css';
@@ -41,12 +43,12 @@ const AppHeader = () => {
               </li>
               <li>
                 <Link to="/localisations" className={`header-nav-item ${isActive('/localisations') ? 'active' : ''}`}>
-                  Mes localisations
+                  <Localisations/> Mes localisations
                 </Link>
               </li>
               <li>
                 <Link to="/sorties" className={`header-nav-item ${isActive('/sorties') ? 'active' : ''}`}>
-                  Sortie
+                  <Sorties /> Sortie
                 </Link>
               </li>
             </ul>
