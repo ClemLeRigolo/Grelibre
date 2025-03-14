@@ -263,7 +263,20 @@ function Locations(props) {
 
   // Utiliser un lieu comme point de départ ou d'arrivée
   const locationAs = (location, type) => {
-    window.location.href = `/map?${type}=${encodeURIComponent(location.name)}`;
+    // Récupérer l'URL actuelle
+    const currentUrl = new URL(window.location.href);
+    
+    // Créer une nouvelle URL pour la page d'accueil
+    const newUrl = new URL('/', currentUrl.origin);
+    
+    // Ajouter le paramètre approprié (from ou to)
+    newUrl.searchParams.set(type, encodeURIComponent(location.name));
+    
+    // Ajouter également les coordonnées pour une meilleure précision
+    newUrl.searchParams.set(`${type}_coords`, `${location.coordinates[0]},${location.coordinates[1]}`);
+    
+    // Rediriger vers la nouvelle URL
+    window.location.href = newUrl.toString();
   };
 
   if (props.authState === authStates.INITIAL_VALUE || isLoading) {
@@ -363,7 +376,7 @@ function Locations(props) {
                         kind="tertiary"
                         size="sm"
                         renderIcon={Home}
-                        onClick={() => props.setFromLocation?.(location)}
+                        onClick={() => locationAs(location, 'from')}
                         >
                         Départ
                         </Button>
@@ -371,7 +384,7 @@ function Locations(props) {
                         kind="tertiary"
                         size="sm"
                         renderIcon={ArrowDown}
-                        onClick={() => props.setToLocation?.(location)}
+                        onClick={() => locationAs(location, 'to')}
                         >
                         Arrivée
                         </Button>

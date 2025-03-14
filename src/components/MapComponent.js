@@ -29,6 +29,7 @@ const MapComponent = () => {
     const markersRef = useRef([]);
     const routeSourceRef = useRef(null);
     const userPositionMarkerRef = useRef(null);
+    const [destinationCoords, setDestinationCoords] = useState(null);
 
     // État pour gérer le chargement
     const [mapLoading, setMapLoading] = useState(true);
@@ -224,6 +225,32 @@ const MapComponent = () => {
                     map.once('idle', () => {
                         console.log('Carte et données entièrement chargées');
                         setMapLoading(false);
+                        
+                        // Si des coordonnées de destination ont été extraites de l'URL, ajouter un marqueur et centrer
+                        if (destinationCoords) {
+                            const marker = new mapboxgl.Marker({ color: '#0f62fe' })
+                                .setLngLat(destinationCoords)
+                                .addTo(map)
+                                .setPopup(new mapboxgl.Popup().setHTML(`
+                                    <div class="popup-content">
+                                        <h3>${endPoint}</h3>
+                                    </div>
+                                `));
+                            
+                            markersRef.current.push(marker);
+                            
+                            // Centrer la carte sur la destination
+                            map.flyTo({
+                                center: destinationCoords,
+                                zoom: 15,
+                                essential: true
+                            });
+                            
+                            // Si l'utilisateur a une position, calculer automatiquement l'itinéraire
+                            if (userPosition && startPoint === "Ma position actuelle") {
+                                calculateRoute();
+                            }
+                        }
                     });
                 });
 
@@ -243,6 +270,53 @@ const MapComponent = () => {
             }
         };
     }, []); // Dépendances vides pour ne s'exécuter qu'une seule fois
+
+    useEffect(() => {
+        const parseUrlParams = () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const toParam = urlParams.get('to');
+            const toCoordsParam = urlParams.get('to_coords');
+            
+            if (toParam && toCoordsParam) {
+                try {
+                    // Décoder le nom de la destination
+                    const decodedDestName = decodeURIComponent(toParam);
+                    
+                    // Analyser les coordonnées (format: "longitude,latitude")
+                    const coords = toCoordsParam.split(',').map(coord => parseFloat(coord));
+                    
+                    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                        console.log("Destination depuis URL:", decodedDestName, coords);
+                        
+                        // Stocker le nom de destination
+                        setEndPoint(decodedDestName);
+                        
+                        // Stocker les coordonnées pour utilisation après le chargement de la carte
+                        setDestinationCoords(coords);
+                        
+                        // Passer directement en mode itinéraire
+                        setSearchMode('route');
+                        
+                        // Créer un objet destination pour la cohérence avec le reste du code
+                        setSelectedDestination({
+                            text: decodedDestName,
+                            place_name: decodedDestName,
+                            center: coords
+                        });
+                        
+                        // Si on a la position utilisateur disponible, l'utiliser comme point de départ
+                        if (userPosition) {
+                            setStartPoint("Ma position actuelle");
+                        }
+                    }
+                } catch (error) {
+                    console.error("Erreur lors de l'analyse des paramètres d'URL:", error);
+                }
+            }
+        };
+        
+        parseUrlParams();
+    }, [userPosition]); // Dépendance à userPosition pour réagir quand celle-ci devient disponible
 
     // Utilisation des fonctions existantes...
     const getBoundsAround = (center, radiusInKm) => {
@@ -335,7 +409,14 @@ const calculateRoute = async () => {
         }
         
         // Obtenir les coordonnées d'arrivée
-        const endCoords = await geocodePlace(endPoint);
+        let endCoords;
+        if (destinationCoords && endPoint === selectedDestination?.place_name) {
+            // Utiliser directement les coordonnées extraites de l'URL
+            endCoords = destinationCoords;
+        } else {
+            // Sinon utiliser le geocoding
+            endCoords = await geocodePlace(endPoint);
+        }
         
         console.log("Coordonnées de départ:", startCoords);
         console.log("Coordonnées d'arrivée:", endCoords);
@@ -667,6 +748,7 @@ const calculateRoute = async () => {
         setSelectedDestination(null);
         setStartPoint('');
         setEndPoint('');
+        setDestinationCoords(null);
         
         // Nettoyer les anciens marqueurs et itinéraires
         markersRef.current.forEach(marker => marker.remove());
@@ -678,6 +760,10 @@ const calculateRoute = async () => {
                 features: []
             });
         }
+
+        // Réinitialiser l'URL à la racine sans paramètres
+        const baseUrl = window.location.pathname;
+        window.history.pushState({}, '', baseUrl);
     };
 
     const TransportToggle = ({ showTransport, toggleTransport }) => {
