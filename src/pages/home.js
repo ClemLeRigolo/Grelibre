@@ -29,9 +29,6 @@ class Home extends React.Component {
         <div className="map-wrapper">
           <MapComponent />
         </div>
-        <div className="inner">
-          <button onClick={handleSignOut}> Se déconnecter </button>
-        </div>
       </div>
     );
   }

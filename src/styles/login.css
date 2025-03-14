@@ -34,4 +34,5 @@
 /* Rendre le conteneur auth en position relative pour le positionnement absolu du bouton de retour */
 .auth-container {
   position: relative;
+  width: 100vw;
 }
