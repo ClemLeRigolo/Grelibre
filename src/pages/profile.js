@@ -138,8 +138,8 @@ class Profile extends React.Component {
               </div>
             ) : (
               <div className="profile-actions">
-                <Button kind="tertiary" onClick={this.handleEditToggle}>Modifier mon profil</Button>
-                <Button kind="danger" onClick={handleSignOut}>Se déconnecter</Button>
+                <Button className="profile-button" kind="tertiary" onClick={this.handleEditToggle}>Modifier mon profil</Button>
+                <Button className="profile-button" kind="danger" onClick={handleSignOut}>Se déconnecter</Button>
               </div>
             )}
           </Tile>
