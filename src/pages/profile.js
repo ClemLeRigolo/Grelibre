@@ -74,7 +74,9 @@ class Profile extends React.Component {
       return (
         <div className="profile-unauthorized">
           <p>Vous devez vous connecter pour accéder à cette page</p>
-          <Link className="button" to={`/login?redirect=${currentUrl}`}>Se connecter</Link>
+          <Link to={`/login?redirect=${currentUrl}`}>
+            <Button className="profile-button" kind="primary">Se connecter</Button>
+        </Link>
         </div>
       );
     }
