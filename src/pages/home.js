@@ -1,5 +1,7 @@
 import React from "react";
 import { Redirect } from "react-router-dom";
+import MapComponent from '../components/MapComponent';
+import '../styles/home.css';
 
 import { authStates, withAuth } from "../components/auth";
 import { signOut } from "../utils/firebase";
@@ -26,8 +28,11 @@ class Home extends React.Component {
     }
 
     return (
-      <div className="container">
-        <h2>Bienvenue {this.props.user.email}!</h2>
+      <div className="home-container">
+        <h1>Carte de Grenoble avec données mTag</h1>
+        <div className="map-wrapper">
+          <MapComponent />
+        </div>
         <div className="inner">
           <button onClick={handleSignOut}> Se déconnecter </button>
         </div>

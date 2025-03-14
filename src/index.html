@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte de Grenoble</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div id="map"></div>
+        <div class="sidebar">
+            <h1>Carte de Grenoble</h1>
+            <div class="controls">
+                <div class="toggle-container">
+                    <label class="switch">
+                        <input type="checkbox" id="transportLayer" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span>Afficher les transports en commun</span>
+                </div>
+                
+                <div class="routing-container">
+                    <h2>Recherche d'itinéraire</h2>
+                    <input type="text" id="startPoint" placeholder="Point de départ">
+                    <input type="text" id="endPoint" placeholder="Point d'arrivée">
+                    <button id="findRoute">Rechercher</button>
+                    <div id="routeInfo"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
