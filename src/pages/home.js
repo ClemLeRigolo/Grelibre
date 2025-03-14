@@ -23,10 +23,6 @@ class Home extends React.Component {
       return <Loader />;
     }
 
-    if (this.props.authState === authStates.LOGGED_OUT) {
-      return <Redirect to="/login"></Redirect>;
-    }
-
     return (
       <div className="home-container">
         {/* <h1>Carte de Grenoble avec données mTag</h1> */}

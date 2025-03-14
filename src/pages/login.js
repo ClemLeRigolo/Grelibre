@@ -20,7 +20,7 @@ class Login extends React.Component {
       email: "",
       password: "",
       retype: "",
-      error: "",
+      error: ""
     };
     this.handleInputChange = this.handleInputChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -63,34 +63,7 @@ class Login extends React.Component {
         getUserData(this.state.email)
         .then((userData) => {
           // Récupérer le nom et le prénom de l'utilisateur
-          const { firstName, lastName, school } = userData;
-
-          let selectedColor = "";
-
-          switch (school) {
-            case "ensimag":
-              selectedColor = "#008437";
-              break;
-            case "phelma":
-              selectedColor = "#bc1d1d";
-              break;
-            case "ense3":
-              selectedColor = "#2c519f";
-              break;
-            case "gi":
-              selectedColor = "#249fda";
-              break;
-            case "pagora":
-              selectedColor = "#eb6608";
-              break;
-            case "esisar":
-              selectedColor = "#862c86";
-              break;
-            default:
-              selectedColor = ""; // Couleur par défaut en cas de correspondance non trouvée
-          }
-
-          document.documentElement.style.setProperty('--selected-color', selectedColor);
+          const { firstName, lastName } = userData;
 
           this.setState({
             firstName,
@@ -109,12 +82,15 @@ class Login extends React.Component {
       });
   }
   render() {
+    const params = new URLSearchParams(window.location.search);
+    const redirect = params.get('redirect');
+
     if (this.props.authState === authStates.INITIAL_VALUE) {
       return <Loader />;
     }
 
     if (this.props.authState === authStates.LOGGED_IN) {
-      return <Redirect to="/"></Redirect>;
+      return <Redirect to={`${redirect}`}></Redirect>;
     }
 
     const errorMsg = this.state.error;
@@ -148,7 +124,7 @@ class Login extends React.Component {
           <Link to="/reset" data-cy='reset'>{fr.FORM_FIELDS.FORGOT_PASSWORD}</Link>
 
           <p>{fr.FORM_FIELDS.LOGIN_ALT_TEXT}</p>
-          <Link to="/signup">Créer un compte</Link>
+          <Link to={`/signup?redirect=${redirect}`}>Créer un compte</Link>
           </div>
         </div>
       </form>

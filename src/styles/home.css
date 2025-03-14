@@ -4,12 +4,14 @@
     right: 10px;
 }
 
-.post-list {
-    margin-right: 5%;
-    margin-left: 5%;
-    min-width: 67%;
-    max-width: 67%;
-    margin-bottom: 5%;
+.button {
+    background-color: lightblue;
+    color: black;
+    padding: 10px 10px;
+    border: none;
+    cursor:pointer !important;
+    border-radius: 20px;
+    text-decoration: none;
 }
 
 .main-container {
@@ -18,70 +20,11 @@
     height: 100%;
 }
 
-.refresh-button {
-    position: fixed;
-    top: 20%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--selected-color);
-    color: white;
-    padding: 10px 10px;
-    border: none;
-    cursor: pointer;
-    border-radius: 20px;
-    z-index: 100;
-  }
 
   body {
     overflow-y: scroll;
   }
 
-  .post-list-header {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    margin-bottom: 20px;
-  }
-
-  .post-list-header button {
-    position: relative;
-    background-color: white;
-    text-align: center;
-    color: black;
-    padding: 10px 10px;
-    border: none;
-    cursor: pointer;
-    margin-left: 10px;
-    font-size: 1.2em;
-  }
-  
-  .post-list-header button::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    height: 3px;
-    background-color: transparent;
-    width: 85%;
-    transform: scaleX(0);
-    transition: transform 0.5s ease-in-out, background-color 0.5s ease-in-out;
-  }
-  
-  .post-list-header button:nth-child(1)::before {
-    transform-origin: right;
-  }
-  
-  .post-list-header button:nth-child(2)::before {
-    transform-origin: left;
-  }
-  
-  .post-list-header button.active::before {
-    transform: scaleX(1);
-    background-color: var(--selected-color);
-  }
-  
-  .post-list-header button:not(.active)::before {
-    background-color: black;
-  }
 
   .home-content {
     display: flex;

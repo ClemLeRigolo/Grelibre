@@ -12,6 +12,7 @@ import Signup from "./pages/signup";
 import Terms from "./pages/terms";
 import Reset from "./pages/reset";
 import Verify from "./pages/verify";
+import Profile from "./pages/profile";
 
 import "./App.css";
 import "./styles/scrollbar.css";
@@ -42,6 +43,7 @@ function App(props) {
   return (
     <Router>
       <div className="app-container">
+        <AppHeader />
         <Switch>
           <Route path="/login" component={Login} />
           <Route path="/signup" component={Signup} />
@@ -50,10 +52,8 @@ function App(props) {
             <Verify {...props} />}
           />
           <Route path="/terms" component={Terms} />
-          <Route path="/">
-            <AppHeader />
-            <ProtectedRoute path="/" component={Home} />
-          </Route>
+          <Route path="/profile" component={Profile} />
+          <Route path="/" component={Home} />
         </Switch>
       </div>
     </Router>

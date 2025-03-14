@@ -46,7 +46,9 @@ const AppHeader = () => {
               <Notification />
             </button>
             <button className="header-action user-profile" aria-label="Profil">
-              <UserAvatar />
+              <Link to="/profile">
+                <UserAvatar />
+              </Link>
             </button>
           </div>
         </div>
