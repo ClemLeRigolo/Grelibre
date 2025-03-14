@@ -106,6 +106,8 @@ export async function resendMail() {
 export async function getUserData(email) {
   const database = firebase.database();
   const userRef = database.ref('users');
+  console.log(userRef);
+  console.log(email)
   const snapshot = await userRef.orderByChild('email').equalTo(email).once('value');
   if (!snapshot.val()) {
     return [];
@@ -118,4 +120,21 @@ export async function getUserDataById(uid) {
   const userRef = database.ref('users/' + uid);
   const snapshot = await userRef.once('value');
   return snapshot.val();
+}
+
+export async function updateUserData(surname, name, tag) {
+  const user = firebase.auth().currentUser;
+  const database = firebase.database();
+  const userRef = database.ref('users/' + user.uid);
+  //get the user data
+  const snapshot = await userRef.once('value');
+  const userTemp = snapshot.val();
+  //update the user data
+  if (surname !== undefined)
+    userTemp.surname = surname;
+  if (name !== undefined)
+  userTemp.name = name;
+  if (tag !== undefined)
+  userTemp.tag = tag;
+  userRef.set(userTemp);
 }
