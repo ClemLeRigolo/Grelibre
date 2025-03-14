@@ -36,21 +36,21 @@ const MapComponent = () => {
             // Chargement des données quand la carte est prête
             map.on('load', () => {
                 // Ajouter la couche de la ville de Grenoble
-                map.addSource('grenoble', {
-                    type: 'geojson',
-                    data: '/data/grenoble.geojson'
-                });
+                // map.addSource('grenoble', {
+                //     type: 'geojson',
+                //     data: '/data/grenoble.geojson'
+                // });
 
-                map.addLayer({
-                    id: 'grenoble-outline',
-                    type: 'line',
-                    source: 'grenoble',
-                    paint: {
-                        'line-color': '#3388ff',
-                        'line-width': 2,
-                        'line-opacity': 0.7
-                    }
-                });
+                // map.addLayer({
+                //     id: 'grenoble-outline',
+                //     type: 'line',
+                //     source: 'grenoble',
+                //     paint: {
+                //         'line-color': '#3388ff',
+                //         'line-width': 2,
+                //         'line-opacity': 0.7
+                //     }
+                // });
 
                 // Ajouter la couche des transports en commun
                 map.addSource('transports', {
