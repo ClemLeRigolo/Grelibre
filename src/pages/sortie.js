@@ -326,9 +326,11 @@ const Sortie = (props) => {
                     params: {
                         access_token: mapboxgl.accessToken,
                         proximity: '5.724524,45.188529', // Grenoble center coordinates
+                        bbox: '5.6,45.1,5.9,45.3', // Bounding box for Grenoble area [minLon,minLat,maxLon,maxLat]
                         limit: 5,
                         country: 'fr',
-                        types: 'address,place,poi'
+                        types: 'address,place,poi',
+                        language: 'fr' // Return results in French
                     }
                 }
             );
@@ -404,10 +406,12 @@ const Sortie = (props) => {
                 {
                     params: {
                         access_token: mapboxgl.accessToken,
-                        proximity: '5.724524,45.188529', // Grenoble center
+                        proximity: '5.724524,45.188529', // Grenoble center coordinates
+                        bbox: '5.6,45.1,5.9,45.3', // Bounding box for Grenoble area [minLon,minLat,maxLon,maxLat]
                         limit: 5,
                         country: 'fr',
-                        types: 'address,place,poi'
+                        types: 'address,place,poi',
+                        language: 'fr' // Return results in French
                     }
                 }
             );
@@ -716,12 +720,9 @@ const Sortie = (props) => {
             
             // Mettre à jour les données du créateur de la sortie
             const creatorId = sortie.creator;
-            console.log('Creator ID:', creatorId);
             if (creatorId && creatorId !== user.uid) {
-                console.log("dans le if")
                 const creatorData = await getUserDataById(creatorId);
                 if (creatorData && creatorData.sorties) {
-                    console.log("dans le if 2")
                     const creatorSorties = [...creatorData.sorties];
                     const creatorSortieIndex = creatorSorties.findIndex(s => s.id === sortieId);
                     
@@ -731,8 +732,6 @@ const Sortie = (props) => {
                             ...creatorSorties[creatorSortieIndex],
                             participants: updatedParticipants
                         };
-
-                        console.log("iciiiiiiiiiiiiiiiiii")
                         
                         // Enregistrer les modifications
                         await updateUserDataById(
