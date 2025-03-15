@@ -1334,168 +1334,178 @@ useEffect(() => {
                     )}
                 </div>
             ) : (
-                <div className={`route-panel ${isRoutePanelMinimized ? 'minimized' : ''}`}>
-                    <div className="route-panel-header">
-                        <Button
-                            kind="ghost"
-                            renderIcon={ArrowRight}
-                            iconDescription="Retour à la recherche"
-                            onClick={resetToSearchMode}
-                            className="back-button"
-                            hasIconOnly
+                <>
+                    {/* Toujours afficher les filtres de transport, même quand le panel est minimisé */}
+                    <div className="floating-transport-filters">
+                        <TransportFilters
+                            filters={transportFilters}
+                            updateFilter={updateTransportFilter}
+                            transportLinesByType={transportLinesByType}
                         />
-                        <h2 className="route-panel-title">{selectedDestination?.text || endPoint}</h2>
-                        
-                        <div className="route-panel-actions">
-                            <Button
-                                kind="ghost"
-                                renderIcon={Share}
-                                iconDescription="Partager"
-                                onClick={shareDestination}
-                                hasIconOnly
-                            />
-                            
-                            {/* Ajouter ce bouton pour minimiser/maximiser le panneau */}
-                            <Button
-                                kind="ghost"
-                                renderIcon={isRoutePanelMinimized ? ChevronDown : ChevronUp}
-                                iconDescription={isRoutePanelMinimized ? "Développer" : "Réduire"}
-                                onClick={() => setIsRoutePanelMinimized(!isRoutePanelMinimized)}
-                                hasIconOnly
-                                className="minimize-button"
-                            />
-                        </div>
                     </div>
-                    
-                    {!isRoutePanelMinimized && (
-                        <div className="route-form">
-                            {/* Contenu existant du formulaire */}
-                            <div className="input-group">
-                                <div className="input-with-icon search-input-container">
-                                    <input 
-                                        type="text" 
-                                        id="start-point"
-                                        value={startPoint}
-                                        onChange={(e) => {
-                                            setStartPoint(e.target.value);
-                                            handlePointSearch(e.target.value, 'start');
-                                        }}
-                                        placeholder="Point de départ" 
-                                        disabled={routeLoading}
-                                        onFocus={() => startSearchResults.length > 0 && setIsStartSearchVisible(true)}
-                                        onBlur={() => setTimeout(() => setIsStartSearchVisible(false), 200)}
-                                    />
-                                    <button 
-                                        className={`icon-button ${startPoint === "Ma position actuelle" ? 'active' : ''}`}
-                                        onClick={() => setStartPoint("Ma position actuelle")}
-                                        disabled={routeLoading}
-                                        title="Utiliser ma position"
-                                    >
-                                        <Location size={16} />
-                                    </button>
-                                    
-                                    {/* Résultats de recherche pour le point de départ */}
-                                    {isStartSearchVisible && startSearchResults.length > 0 && (
-                                        <div className="point-search-results">
-                                            {startSearchResults.map((result) => (
-                                                <div 
-                                                    key={result.id} 
-                                                    className="search-result-item"
-                                                    onMouseDown={() => selectPointResult(result, 'start')}
-                                                >
-                                                    <Search size={16} className="search-result-icon" />
-                                                    <div className="search-result-content">
-                                                        <div className="search-result-name">{result.text}</div>
-                                                        <div className="search-result-address">{result.place_name}</div>
+
+                    <div className={`route-panel ${isRoutePanelMinimized ? 'minimized' : ''}`}>
+                        <div className="route-panel-header">
+                            <Button
+                                kind="ghost"
+                                renderIcon={ArrowRight}
+                                iconDescription="Retour à la recherche"
+                                onClick={resetToSearchMode}
+                                className="back-button"
+                                hasIconOnly
+                            />
+                            <h2 className="route-panel-title">{selectedDestination?.text || endPoint}</h2>
+                            
+                            <div className="route-panel-actions">
+                                <Button
+                                    kind="ghost"
+                                    renderIcon={Share}
+                                    iconDescription="Partager"
+                                    onClick={shareDestination}
+                                    hasIconOnly
+                                />
+                                
+                                <Button
+                                    kind="ghost"
+                                    renderIcon={isRoutePanelMinimized ? ChevronDown : ChevronUp}
+                                    iconDescription={isRoutePanelMinimized ? "Développer" : "Réduire"}
+                                    onClick={() => setIsRoutePanelMinimized(!isRoutePanelMinimized)}
+                                    hasIconOnly
+                                    className="minimize-button"
+                                />
+                            </div>
+                        </div>
+                        
+                        {!isRoutePanelMinimized && (
+                            <div className="route-form">
+                                {/* Contenu existant du formulaire */}
+                                <div className="input-group">
+                                    <div className="input-with-icon search-input-container">
+                                        <input 
+                                            type="text" 
+                                            id="start-point"
+                                            value={startPoint}
+                                            onChange={(e) => {
+                                                setStartPoint(e.target.value);
+                                                handlePointSearch(e.target.value, 'start');
+                                            }}
+                                            placeholder="Point de départ" 
+                                            disabled={routeLoading}
+                                            onFocus={() => startSearchResults.length > 0 && setIsStartSearchVisible(true)}
+                                            onBlur={() => setTimeout(() => setIsStartSearchVisible(false), 200)}
+                                        />
+                                        <button 
+                                            className={`icon-button ${startPoint === "Ma position actuelle" ? 'active' : ''}`}
+                                            onClick={() => setStartPoint("Ma position actuelle")}
+                                            disabled={routeLoading}
+                                            title="Utiliser ma position"
+                                        >
+                                            <Location size={16} />
+                                        </button>
+                                        
+                                        {/* Résultats de recherche pour le point de départ */}
+                                        {isStartSearchVisible && startSearchResults.length > 0 && (
+                                            <div className="point-search-results">
+                                                {startSearchResults.map((result) => (
+                                                    <div 
+                                                        key={result.id} 
+                                                        className="search-result-item"
+                                                        onMouseDown={() => selectPointResult(result, 'start')}
+                                                    >
+                                                        <Search size={16} className="search-result-icon" />
+                                                        <div className="search-result-content">
+                                                            <div className="search-result-name">{result.text}</div>
+                                                            <div className="search-result-address">{result.place_name}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="input-with-icon search-input-container">
+                                        <input 
+                                            type="text"
+                                            id="end-point"
+                                            value={endPoint}
+                                            onChange={(e) => {
+                                                setEndPoint(e.target.value);
+                                                handlePointSearch(e.target.value, 'end');
+                                            }}
+                                            placeholder="Point d'arrivée" 
+                                            disabled={routeLoading}
+                                            onFocus={() => endSearchResults.length > 0 && setIsEndSearchVisible(true)}
+                                            onBlur={() => setTimeout(() => setIsEndSearchVisible(false), 200)}
+                                        />
+                                        <button 
+                                            className="icon-button"
+                                            onClick={() => {
+                                                const temp = startPoint;
+                                                setStartPoint(endPoint);
+                                                setEndPoint(temp);
+                                                const tempCoords = startPointCoords;
+                                                setStartPointCoords(destinationCoords);
+                                                setDestinationCoords(tempCoords);
+                                            }}
+                                            disabled={routeLoading}
+                                            title="Échanger les points"
+                                        >
+                                            <ArrowRight size={16} />
+                                        </button>
+                                        
+                                        {/* Résultats de recherche pour le point d'arrivée */}
+                                        {isEndSearchVisible && endSearchResults.length > 0 && (
+                                            <div className="point-search-results">
+                                                {endSearchResults.map((result) => (
+                                                    <div 
+                                                        key={result.id} 
+                                                        className="search-result-item"
+                                                        onMouseDown={() => selectPointResult(result, 'end')}
+                                                    >
+                                                        <Search size={16} className="search-result-icon" />
+                                                        <div className="search-result-content">
+                                                            <div className="search-result-name">{result.text}</div>
+                                                            <div className="search-result-address">{result.place_name}</div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                                 
-                                <div className="input-with-icon search-input-container">
-                                    <input 
-                                        type="text"
-                                        id="end-point"
-                                        value={endPoint}
-                                        onChange={(e) => {
-                                            setEndPoint(e.target.value);
-                                            handlePointSearch(e.target.value, 'end');
-                                        }}
-                                        placeholder="Point d'arrivée" 
-                                        disabled={routeLoading}
-                                        onFocus={() => endSearchResults.length > 0 && setIsEndSearchVisible(true)}
-                                        onBlur={() => setTimeout(() => setIsEndSearchVisible(false), 200)}
-                                    />
-                                    <button 
-                                        className="icon-button"
-                                        onClick={() => {
-                                            const temp = startPoint;
-                                            setStartPoint(endPoint);
-                                            setEndPoint(temp);
-                                            const tempCoords = startPointCoords;
-                                            setStartPointCoords(destinationCoords);
-                                            setDestinationCoords(tempCoords);
-                                        }}
-                                        disabled={routeLoading}
-                                        title="Échanger les points"
-                                    >
-                                        <ArrowRight size={16} />
-                                    </button>
-                                    
-                                    {/* Résultats de recherche pour le point d'arrivée */}
-                                    {isEndSearchVisible && endSearchResults.length > 0 && (
-                                        <div className="point-search-results">
-                                            {endSearchResults.map((result) => (
-                                                <div 
-                                                    key={result.id} 
-                                                    className="search-result-item"
-                                                    onMouseDown={() => selectPointResult(result, 'end')}
-                                                >
-                                                    <Search size={16} className="search-result-icon" />
-                                                    <div className="search-result-content">
-                                                        <div className="search-result-name">{result.text}</div>
-                                                        <div className="search-result-address">{result.place_name}</div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
+                                <div className="mode-selector">
+                                    <label>Mode de transport:</label>
+                                    <select value={transportMode} onChange={handleModeChange} disabled={routeLoading}>
+                                        <option value="TRANSIT,WALK">🚆 Transport en commun</option>
+                                        <option value="WALK">🚶 Marche à pied</option>
+                                        <option value="BICYCLE">🚲 Vélo</option>
+                                        <option value="TRANSIT,BICYCLE">🚆+🚲 Transport + Vélo</option>
+                                    </select>
                                 </div>
-                            </div>
-                            
-                            <div className="mode-selector">
-                                <label>Mode de transport:</label>
-                                <select value={transportMode} onChange={handleModeChange} disabled={routeLoading}>
-                                    <option value="TRANSIT,WALK">🚆 Transport en commun</option>
-                                    <option value="WALK">🚶 Marche à pied</option>
-                                    <option value="BICYCLE">🚲 Vélo</option>
-                                    <option value="TRANSIT,BICYCLE">🚆+🚲 Transport + Vélo</option>
-                                </select>
-                            </div>
-                            
-                            <button 
-                                onClick={calculateRoute}
-                                disabled={routeLoading || !startPoint || !endPoint}
-                                className="search-route-button"
-                            >
-                                {routeLoading ? 'Recherche en cours...' : 'Rechercher'}
-                            </button>
+                                
+                                <button 
+                                    onClick={calculateRoute}
+                                    disabled={routeLoading || !startPoint || !endPoint}
+                                    className="search-route-button"
+                                >
+                                    {routeLoading ? 'Recherche en cours...' : 'Rechercher'}
+                                </button>
 
-                            {routeLoading ? (
-                                <div className="route-loader">
-                                    <Loader description="Calcul de l'itinéraire..." />
-                                </div>
-                            ) : routeInfo && (
-                                <div 
-                                    className="route-info"
-                                    dangerouslySetInnerHTML={{ __html: routeInfo }}
-                                />
-                            )}
-                        </div>
-                    )}
-                </div>
+                                {routeLoading ? (
+                                    <div className="route-loader">
+                                        <Loader description="Calcul de l'itinéraire..." />
+                                    </div>
+                                ) : routeInfo && (
+                                    <div 
+                                        className="route-info"
+                                        dangerouslySetInnerHTML={{ __html: routeInfo }}
+                                    />
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </>
             )}
         </div>
     );

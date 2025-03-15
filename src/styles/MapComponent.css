@@ -823,3 +823,63 @@ input:checked + .slider:before {
     width: 28px !important;
   }
 }
+
+/* Ajouter à votre fichier MapComponent.css */
+
+/* Style pour les filtres de transport flottants */
+.floating-transport-filters {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  background-color: transparent;
+  max-width: 300px;
+}
+
+/* Ajuster le style du conteneur des filtres pour le mode flottant */
+.transport-filters-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.filter-toggle-button {
+  width: 100%;
+  justify-content: center;
+  padding: 8px 16px;
+  font-size: 14px;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Style du panneau des filtres */
+.filters-panel {
+  background-color: white;
+  padding: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* Pour le responsive */
+@media (max-width: 600px) {
+  .floating-transport-filters {
+    /* Sur mobile, positionner les filtres en bas de l'écran quand le panneau est minimisé */
+    top: auto;
+    right: 10px;
+    bottom: 70px;
+    left: 10px;
+    max-width: none;
+  }
+}
+
+/* Ajuster la position quand le panneau d'itinéraire est visible */
+@media (max-width: 600px) {
+  .route-panel:not(.minimized) + .floating-transport-filters {
+    display: none; /* Cacher les filtres flottants quand le panneau est développé sur mobile */
+  }
+}
+
