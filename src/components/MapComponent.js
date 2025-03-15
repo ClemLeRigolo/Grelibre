@@ -64,6 +64,12 @@ const MapComponent = () => {
         buses: []   // Lignes de bus
     });
 
+    // Ajout de nouveaux états pour la recherche dans les champs d'itinéraire
+    const [startSearchResults, setStartSearchResults] = useState([]);
+    const [endSearchResults, setEndSearchResults] = useState([]);
+    const [isStartSearchVisible, setIsStartSearchVisible] = useState(false);
+    const [isEndSearchVisible, setIsEndSearchVisible] = useState(false);
+
     // Remplacer les deux useEffect séparés par un seul qui gère à la fois la carte et la position
     useEffect(() => {
         // Fonction pour obtenir la position de l'utilisateur
@@ -761,11 +767,33 @@ const calculateRoute = async () => {
         
         try {
             const response = await axios.get(
-                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value + ', Grenoble')}.json?access_token=${mapboxgl.accessToken}&proximity=${GRENOBLE_CENTER.join(',')}&limit=5&country=fr`
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${mapboxgl.accessToken}&proximity=${GRENOBLE_CENTER.join(',')}&types=address,poi,place,neighborhood&limit=5&country=fr&language=fr`
             );
             
             if (response.data.features && response.data.features.length > 0) {
-                setSearchResults(response.data.features);
+                // Filtrer et classer les résultats
+                const enhancedResults = response.data.features.map(feature => {
+                    // Améliorer le score en fonction du type de lieu
+                    let score = feature.relevance;
+                    
+                    // Donner un meilleur score aux points d'intérêt et arrêts de transport
+                    if (feature.properties && feature.properties.category === 'transport') {
+                        score += 0.2;
+                    }
+                    if (feature.place_type.includes('poi')) {
+                        score += 0.1;
+                    }
+                    
+                    return {
+                        ...feature,
+                        enhancedScore: score
+                    };
+                });
+                
+                // Trier par score amélioré
+                enhancedResults.sort((a, b) => b.enhancedScore - a.enhancedScore);
+                
+                setSearchResults(enhancedResults);
             } else {
                 setSearchResults([]);
             }
@@ -776,7 +804,6 @@ const calculateRoute = async () => {
             setIsSearchLoading(false);
         }
     };
-
     // Remplacer navigateToSearchResult par:
     const navigateToSearchResult = (result) => {
         // Nettoyer les anciens marqueurs sauf celui de position utilisateur
@@ -1172,6 +1199,72 @@ useEffect(() => {
         
     }, [transportFilters]);
 
+    // Fonction modifiée pour rechercher dans les champs de départ et d'arrivée
+    const handlePointSearch = async (value, type) => {
+        if (value.length < 3) {
+            if (type === 'start') setStartSearchResults([]);
+            else setEndSearchResults([]);
+            return;
+        }
+        
+        try {
+            const response = await axios.get(
+                `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(value)}.json?access_token=${mapboxgl.accessToken}&proximity=${GRENOBLE_CENTER.join(',')}&types=address,poi,place,neighborhood&limit=5&country=fr&language=fr`
+            );
+            
+            if (response.data.features && response.data.features.length > 0) {
+                // Filtrer et classer les résultats
+                const enhancedResults = response.data.features.map(feature => {
+                    let score = feature.relevance;
+                    
+                    if (feature.properties && feature.properties.category === 'transport') {
+                        score += 0.2;
+                    }
+                    if (feature.place_type.includes('poi')) {
+                        score += 0.1;
+                    }
+                    
+                    return {
+                        ...feature,
+                        enhancedScore: score
+                    };
+                });
+                
+                enhancedResults.sort((a, b) => b.enhancedScore - a.enhancedScore);
+                
+                if (type === 'start') {
+                    setStartSearchResults(enhancedResults);
+                    setIsStartSearchVisible(true);
+                } else {
+                    setEndSearchResults(enhancedResults);
+                    setIsEndSearchVisible(true);
+                }
+            } else {
+                if (type === 'start') setStartSearchResults([]);
+                else setEndSearchResults([]);
+            }
+        } catch (error) {
+            console.error(`Erreur de recherche pour ${type}:`, error);
+            if (type === 'start') setStartSearchResults([]);
+            else setEndSearchResults([]);
+        }
+    };
+
+    // Fonction pour sélectionner un résultat de recherche
+    const selectPointResult = (result, type) => {
+        if (type === 'start') {
+            setStartPoint(result.place_name);
+            setStartPointCoords(result.center);
+            setStartSearchResults([]);
+            setIsStartSearchVisible(false);
+        } else {
+            setEndPoint(result.place_name);
+            setDestinationCoords(result.center);
+            setEndSearchResults([]);
+            setIsEndSearchVisible(false);
+        }
+    };
+    
     return (
         <div className="map-container">
             {mapLoading && (
@@ -1245,12 +1338,6 @@ useEffect(() => {
                         />
                         <h2 className="route-panel-title">{selectedDestination?.text || endPoint}</h2>
                         <div className="route-panel-actions">
-                            <TransportToggle 
-                                showTransport={showTransport} 
-                                toggleTransport={handleToggleTransport} 
-                            />
-                        </div>
-                        <div className="route-panel-actions">
                             <Button
                                 kind="ghost"
                                 renderIcon={Share}
@@ -1267,14 +1354,19 @@ useEffect(() => {
                     
                     <div className="route-form">
                         <div className="input-group">
-                            <div className="input-with-icon">
+                            <div className="input-with-icon search-input-container">
                                 <input 
                                     type="text" 
                                     id="start-point"
                                     value={startPoint}
-                                    onChange={(e) => setStartPoint(e.target.value)}
+                                    onChange={(e) => {
+                                        setStartPoint(e.target.value);
+                                        handlePointSearch(e.target.value, 'start');
+                                    }}
                                     placeholder="Point de départ" 
                                     disabled={routeLoading}
+                                    onFocus={() => startSearchResults.length > 0 && setIsStartSearchVisible(true)}
+                                    onBlur={() => setTimeout(() => setIsStartSearchVisible(false), 200)}
                                 />
                                 <button 
                                     className={`icon-button ${startPoint === "Ma position actuelle" ? 'active' : ''}`}
@@ -1284,16 +1376,40 @@ useEffect(() => {
                                 >
                                     <Location size={16} />
                                 </button>
+                                
+                                {/* Résultats de recherche pour le point de départ */}
+                                {isStartSearchVisible && startSearchResults.length > 0 && (
+                                    <div className="point-search-results">
+                                        {startSearchResults.map((result) => (
+                                            <div 
+                                                key={result.id} 
+                                                className="search-result-item"
+                                                onMouseDown={() => selectPointResult(result, 'start')}
+                                            >
+                                                <Search size={16} className="search-result-icon" />
+                                                <div className="search-result-content">
+                                                    <div className="search-result-name">{result.text}</div>
+                                                    <div className="search-result-address">{result.place_name}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                             
-                            <div className="input-with-icon">
+                            <div className="input-with-icon search-input-container">
                                 <input 
                                     type="text"
                                     id="end-point"
                                     value={endPoint}
-                                    onChange={(e) => setEndPoint(e.target.value)}
+                                    onChange={(e) => {
+                                        setEndPoint(e.target.value);
+                                        handlePointSearch(e.target.value, 'end');
+                                    }}
                                     placeholder="Point d'arrivée" 
                                     disabled={routeLoading}
+                                    onFocus={() => endSearchResults.length > 0 && setIsEndSearchVisible(true)}
+                                    onBlur={() => setTimeout(() => setIsEndSearchVisible(false), 200)}
                                 />
                                 <button 
                                     className="icon-button"
@@ -1301,12 +1417,34 @@ useEffect(() => {
                                         const temp = startPoint;
                                         setStartPoint(endPoint);
                                         setEndPoint(temp);
+                                        const tempCoords = startPointCoords;
+                                        setStartPointCoords(destinationCoords);
+                                        setDestinationCoords(tempCoords);
                                     }}
                                     disabled={routeLoading}
                                     title="Échanger les points"
                                 >
                                     <ArrowRight size={16} />
                                 </button>
+                                
+                                {/* Résultats de recherche pour le point d'arrivée */}
+                                {isEndSearchVisible && endSearchResults.length > 0 && (
+                                    <div className="point-search-results">
+                                        {endSearchResults.map((result) => (
+                                            <div 
+                                                key={result.id} 
+                                                className="search-result-item"
+                                                onMouseDown={() => selectPointResult(result, 'end')}
+                                            >
+                                                <Search size={16} className="search-result-icon" />
+                                                <div className="search-result-content">
+                                                    <div className="search-result-name">{result.text}</div>
+                                                    <div className="search-result-address">{result.place_name}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         </div>
                         

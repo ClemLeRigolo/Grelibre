@@ -698,3 +698,65 @@ input:checked + .slider:before {
 :root {
     --cds-background-hover: #d3d3d3; /* very light gray */
 }
+
+/* Dans le fichier MapComponent.css */
+
+.search-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.point-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  margin-top: 2px;
+}
+
+.search-result-item {
+  padding: 10px 16px;
+  display: flex;
+  align-items: flex-start;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+  background-color: #f0f0f0;
+}
+
+.input-with-icon {
+  position: relative;
+}
+
+.input-with-icon input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.icon-button {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
+  border-radius: 50%;
+}
+
+.icon-button.active {
+  background-color: rgba(15, 98, 254, 0.1);
+  color: #0f62fe;
+}
