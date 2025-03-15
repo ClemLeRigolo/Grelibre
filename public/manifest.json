@@ -1,6 +1,6 @@
 {
-  "short_name": "Easy-NP",
-  "name": "Easy-NP",
+  "short_name": "Grelibre",
+  "name": "Se déplacer dans Grenoble",
   "icons": [
     {
       "src": "favicon.ico",
@@ -18,8 +18,16 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/?source=pwa",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#0F62FE",
+  "background_color": "#ffffff",
+  "description": "Consultez les horaires des transports en commun de Grenoble",
+  "shortcuts": [
+    {
+      "name": "Mes arrêts favoris",
+      "url": "/?view=favorites",
+      "icons": [{ "src": "/icons/favorites.png", "sizes": "192x192" }]
+    }
+  ]
 }
