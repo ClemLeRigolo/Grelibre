@@ -994,7 +994,7 @@ const Sortie = (props) => {
     }
 
     return (
-        <div className="sortie-container">
+        <div className="sortie-container mobile-nav-padding">
             <h1>Mes Sorties</h1>
             
             {notification && (

@@ -30,7 +30,45 @@ function Locations(props) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef(null);
+
+  // Add this to your existing state variables
+  const [showMapOnMobile, setShowMapOnMobile] = useState(false);
+  const [mapInitialized, setMapInitialized] = useState(false);
+
+  // Add this toggle function
+  const toggleMapOnMobile = () => {
+    if (showMapOnMobile) {
+      setShowMapOnMobile(false);
+    } else { 
+      setShowMapOnMobile(true);
+    }
+    // Need to resize map after state changes
+    setTimeout(() => {
+      if (mapInstance.current) {
+        mapInstance.current.resize();
+      }
+    }, 50);
+  };
   
+  useEffect(() => {
+    if (mapInstance.current && mapInitialized) {
+      const handleResize = () => {
+        mapInstance.current.resize();
+      };
+      
+      // Handle resize for mobile toggle
+      if (showMapOnMobile) {
+        handleResize();
+      }
+      
+      // Listen for window resize events
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [showMapOnMobile, mapInitialized]);
 
   // Charger les données utilisateur
   useEffect(() => {
@@ -114,6 +152,8 @@ function Locations(props) {
         refreshMarkers();
       });
     }
+
+    setMapInitialized(true);
     
     return () => {
       if (mapInstance.current) {
@@ -337,8 +377,7 @@ function Locations(props) {
   }
 
   return (
-    <div className="locations-container">
-      <div className="locations-sidebar">
+    <div className={`locations-container ${showMapOnMobile ? 'show-map-mobile' : 'show-list-mobile'}`}>      <div className="locations-sidebar">
         <h2>Mes Lieux Favoris</h2>
 
         <div className="address-search-form">
@@ -436,7 +475,15 @@ function Locations(props) {
         </div>
       </div>
       
-      <div className="locations-map" ref={mapContainerRef}></div>
+      <div className={`map-container-sortie ${showMapOnMobile ? 'map-visible' : 'map-hidden'}`} ref={mapContainerRef}></div>
+      <div className="mobile-map-toggle">
+        <Button 
+          kind="secondary"
+          onClick={toggleMapOnMobile}
+        >
+          {showMapOnMobile ? 'Retour à la liste' : 'Voir la carte'}
+        </Button>
+      </div>
     </div>
   );
 }

@@ -143,3 +143,144 @@
     min-width: 0;
     font-size: 0.75rem;
   }
+
+  /* Base styles first */
+.locations-container {
+  display: flex;
+  flex-direction: row;
+  height: calc(100vh - 64px); /* Adjust based on your header height */
+  overflow: hidden;
+}
+
+.map-container-sortie {
+  flex: 1;
+  height: 100%;position: relative;
+  z-index: 1;
+}
+
+.locations-sidebar {
+  width: 400px;
+  padding: 1rem;
+  overflow-y: auto;
+  background-color: #f4f4f4;
+}
+
+.location-tile {
+  margin-bottom: 1rem;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .locations-container {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 64px);
+  }
+  
+  .map-container-sortie {
+    height: 50vh; /* Half of the viewport height on mobile */
+    width: 100%;
+  }
+  
+  .locations-sidebar {
+    width: 100%;
+    height: auto;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  
+  /* Add bottom padding for mobile navigation */
+  .locations-container {
+    padding-bottom: 70px; /* Adjust based on mobile nav height */
+  }
+  
+  /* Make buttons and inputs full-width on mobile */
+  .locations-sidebar button,
+  .locations-sidebar .bx--text-input {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Adjust tile spacing */
+  .location-tile {
+    padding: 0.75rem;
+  }
+  
+  /* Improve button spacing in location items */
+  .location-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+  }
+}
+
+/* Mobile map toggle button */
+.mobile-map-toggle {
+  display: none;
+}
+
+/* Mobile specific styles */
+@media screen and (max-width: 768px) {
+  .locations-container {
+    position: relative;
+    height: calc(100vh - 64px - 70px); /* Adjust based on header and footer heights */
+  }
+  
+  .mobile-map-toggle {
+    display: block;
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100; /* Increased z-index to ensure it's always on top */
+    border-radius: 4px; /* Rounded corners */
+  }
+  
+  .map-container-sortie, .locations-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Default state - show list, hide map */
+  .map-container-sortie {
+    opacity: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+  
+  .locations-sidebar {
+    opacity: 1;
+    z-index: 10;
+    pointer-events: auto;
+  }
+  
+  /* When showing map */
+  .show-map-mobile .map-container-sortie {
+    opacity: 1;
+    z-index: 10;
+    pointer-events: auto;
+  }
+  
+  .show-map-mobile .locations-sidebar {
+    opacity: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+  
+  /* When showing list */
+  .show-list-mobile .locations-sidebar {
+    opacity: 1;
+    z-index: 10;
+    pointer-events: auto;
+  }
+  
+  .show-list-mobile .map-container-sortie {
+    opacity: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+}
