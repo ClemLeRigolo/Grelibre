@@ -122,7 +122,9 @@ export async function getUserDataById(uid) {
   return snapshot.val();
 }
 
-export async function updateUserData(surname, name, tag, favoriteLocations) {
+export async function updateUserData(surname, name, tag, favoriteLocations, sorties) {
+  console.log("updateUserData");
+  console.log(sorties);
   const user = firebase.auth().currentUser;
   const database = firebase.database();
   const userRef = database.ref('users/' + user.uid);
@@ -138,5 +140,34 @@ export async function updateUserData(surname, name, tag, favoriteLocations) {
   userTemp.tag = tag;
   if (favoriteLocations !== undefined)
   userTemp.favoriteLocations = favoriteLocations.favoriteLocations;
+  if (sorties !== undefined)
+  userTemp.sorties = sorties.sortie;
   userRef.set(userTemp);
+}
+
+export async function updateUserDataById(uid, surname, name, tag, favoriteLocations, sorties) {
+  const database = firebase.database();
+  const userRef = database.ref('users/' + uid);
+  //get the user data
+  const snapshot = await userRef.once('value');
+  const userTemp = snapshot.val();
+  //update the user data
+  if (surname !== undefined)
+    userTemp.surname = surname;
+  if (name !== undefined)
+  userTemp.name = name;
+  if (tag !== undefined)
+  userTemp.tag = tag;
+  if (favoriteLocations !== undefined)
+  userTemp.favoriteLocations = favoriteLocations.favoriteLocations;
+  if (sorties !== undefined)
+  userTemp.sorties = sorties.sortie;
+  userRef.set(userTemp);
+}
+
+export async function getAllUsers() {
+  const database = firebase.database();
+  const userRef = database.ref('users');
+  const snapshot = await userRef.once('value');
+  return snapshot.val();
 }

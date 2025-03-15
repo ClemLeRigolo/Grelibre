@@ -15,6 +15,7 @@ import Verify from "./pages/verify";
 import Profile from "./pages/profile";
 import LoaderTest from "./pages/loaderTest";
 import Locations from "./pages/localisations";
+import Sortie from "./pages/sortie";
 
 import "./App.css";
 import "./styles/scrollbar.css";
@@ -69,6 +70,7 @@ function App(props) {
             <Route path="/profile" component={Profile} />
             <Route path="/loader-test" component={LoaderTest} />
             <Route path="/localisations" component={Locations} />
+            <Route path="/sortie" component={Sortie} />
             <Route path="/" component={Home} />
           </Switch>
         </div>

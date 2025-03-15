@@ -47,7 +47,7 @@ const AppHeader = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/sorties" className={`header-nav-item ${isActive('/sorties') ? 'active' : ''}`}>
+                <Link to="/sortie" className={`header-nav-item ${isActive('/sorties') ? 'active' : ''}`}>
                   <Sorties /> Sortie
                 </Link>
               </li>
