@@ -6,7 +6,8 @@ import {
   Notification,
   UserAvatar, 
   WatsonHealthImageAvailabilityLocal as Localisations,
-  Event as Sorties
+  Event as Sorties,
+  NetworkTimeProtocol as Horaires
 } from '@carbon/icons-react';
 
 import '../styles/AppHeader.css';
@@ -56,8 +57,10 @@ const AppHeader = () => {
         </div>
         <div className="header-right">
           <div className="header-actions">
-            <button className="header-action" aria-label="Recherche">
-              <Search />
+            <button className="header-action" aria-label="Horaires">
+              <Link to="/horaires">
+                <Horaires />
+              </Link>
             </button>
             <button className="header-action" aria-label="Notifications">
               <Notification />
