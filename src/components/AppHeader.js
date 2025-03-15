@@ -36,7 +36,7 @@ const AppHeader = () => {
             <Link to="/">GreLibre</Link>
           </div>
           <nav className="header-nav">
-            <ul>
+            <ul className="header-nav-list">
               <li>
                 <Link to="/" className={`header-nav-item ${isActive('/') ? 'active' : ''}`}>
                   <ChoroplethMap /> Carte
@@ -54,6 +54,14 @@ const AppHeader = () => {
               </li>
             </ul>
           </nav>
+          <div className="mobile-nav">
+            <Link to="/localisations" className={`mobile-nav-item ${isActive('/localisations') ? 'active' : ''}`}>
+              <Localisations/> <span className="mobile-nav-text">Localisations</span>
+            </Link>
+            <Link to="/sortie" className={`mobile-nav-item ${isActive('/sorties') ? 'active' : ''}`}>
+              <Sorties /> <span className="mobile-nav-text">Sortie</span>
+            </Link>
+          </div>
         </div>
         <div className="header-right">
           <div className="header-actions">
