@@ -2,10 +2,6 @@
 
 L'objectif de ce projet, réalisé dans le cadre d'un hackathon, était de développer une application similaire à Google Maps.
 
-## Lien du rapport
-
-[Rapport du projet](https://docs.google.com/document/d/1dHUea33gHU7xzhhz_uommlqdBCblqu0OmmTAfqD2uTg/edit?usp=sharing)
-
 ## Fonctionnalités principales
 
 - Recherche d'itinéraire avec Leaflet et Leaflet Routing Machine.
